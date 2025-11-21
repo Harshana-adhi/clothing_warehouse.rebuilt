@@ -1,7 +1,9 @@
 package GUI;
 
 import DAO.UserDAO;
+import DAO.EmployeeDAO;
 import Models.User;
+import Models.Employee;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,6 +12,7 @@ public class SignupPanel extends JPanel {
 
     private JTextField txtUsername;
     private JPasswordField txtPassword;
+    private JTextField txtEmployeeId; // NEW
     private JComboBox<String> cmbRole;
     private JButton btnSignup, btnBack;
 
@@ -24,6 +27,7 @@ public class SignupPanel extends JPanel {
         title.setBounds(100, 20, 300, 40);
         add(title);
 
+        // Username
         JLabel lblUsername = new JLabel("Username:");
         lblUsername.setForeground(Color.WHITE);
         lblUsername.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -37,6 +41,7 @@ public class SignupPanel extends JPanel {
         txtUsername.setForeground(Color.WHITE);
         add(txtUsername);
 
+        // Password
         JLabel lblPassword = new JLabel("Password:");
         lblPassword.setForeground(Color.WHITE);
         lblPassword.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -50,6 +55,7 @@ public class SignupPanel extends JPanel {
         txtPassword.setForeground(Color.WHITE);
         add(txtPassword);
 
+        // Role selection
         JLabel lblRole = new JLabel("Select Role:");
         lblRole.setForeground(Color.WHITE);
         lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -61,16 +67,32 @@ public class SignupPanel extends JPanel {
         cmbRole.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         add(cmbRole);
 
+        // Employee ID (only for Manager/Staff)
+        JLabel lblEmpId = new JLabel("Employee ID:");
+        lblEmpId.setForeground(Color.WHITE);
+        lblEmpId.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblEmpId.setBounds(50, 370, 120, 30);
+        add(lblEmpId);
+
+        txtEmployeeId = new JTextField();
+        txtEmployeeId.setBounds(50, 405, 300, 35);
+        txtEmployeeId.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        txtEmployeeId.setBackground(new Color(50, 50, 50));
+        txtEmployeeId.setForeground(Color.WHITE);
+        add(txtEmployeeId);
+
+        // Signup button
         btnSignup = new JButton("Create Account");
-        btnSignup.setBounds(50, 370, 300, 40);
+        btnSignup.setBounds(50, 460, 300, 40);
         btnSignup.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btnSignup.setBackground(new Color(0, 120, 215));
         btnSignup.setForeground(Color.WHITE);
         btnSignup.addActionListener(e -> handleSignup());
         add(btnSignup);
 
+        // Back button
         btnBack = new JButton("Back to Login");
-        btnBack.setBounds(50, 420, 300, 35);
+        btnBack.setBounds(50, 510, 300, 35);
         btnBack.setForeground(Color.CYAN);
         btnBack.setBackground(new Color(40, 40, 40));
         btnBack.setBorder(null);
@@ -82,20 +104,33 @@ public class SignupPanel extends JPanel {
         String username = txtUsername.getText().trim();
         String password = new String(txtPassword.getPassword()).trim();
         String role = cmbRole.getSelectedItem().toString();
+        String employeeId = txtEmployeeId.getText().trim();
 
-        UserDAO dao = new UserDAO();
-
-        if (dao.usernameExists(username)) {
-            JOptionPane.showMessageDialog(this, "Username already exists!");
+        // Admin does not need Employee ID
+        if ("Admin".equalsIgnoreCase(role)) {
+            employeeId = null;
+        } else if (employeeId.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Employee ID is required for Manager and Staff accounts.");
             return;
         }
 
-        boolean added = dao.signup(new User(username, password, role));
+        UserDAO dao = new UserDAO();
+        EmployeeDAO empDao = new EmployeeDAO();
+        Employee emp = null;
 
+        if (employeeId != null) {
+            emp = empDao.getById(employeeId);
+            if (emp == null) {
+                JOptionPane.showMessageDialog(this, "No employee found with ID: " + employeeId);
+                return;
+            }
+        }
+
+        boolean added = dao.signup(new User(username, password, role, employeeId));
         if (added) {
             JOptionPane.showMessageDialog(this, "Account created successfully!");
         } else {
-            JOptionPane.showMessageDialog(this, "Error creating account!");
+            JOptionPane.showMessageDialog(this, "Error creating account! Check rules.");
         }
     }
 }
