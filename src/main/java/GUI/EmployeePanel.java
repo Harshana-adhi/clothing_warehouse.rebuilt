@@ -24,6 +24,8 @@ public class EmployeePanel extends JPanel {
     private final Color panelBackground = new Color(245, 245, 245);
     private final Color formBackground = Color.WHITE;
     private final Color buttonColor = new Color(0, 150, 136);
+    private final Color backButtonColor = new Color(200, 150, 136);
+    private final Color backButtonhover = new Color(200, 100, 136);
     private final Color buttonHover = new Color(0, 137, 123);
     private final Color tableSelection = new Color(200, 230, 201);
     private final Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
@@ -78,6 +80,32 @@ public class EmployeePanel extends JPanel {
 
         JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 15, 15));
         buttonPanel.setBackground(formBackground);
+
+        // --- Back Button ---
+        JButton btnBack = new JButton("Back");
+        btnBack.setBackground(backButtonColor);
+        btnBack.setForeground(Color.WHITE);
+        btnBack.setFont(labelFont);
+        btnBack.setFocusPainted(false);
+        btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnBack.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) { btnBack.setBackground(backButtonhover); }
+            @Override
+            public void mouseExited(MouseEvent e) { btnBack.setBackground(backButtonColor); }
+        });
+        btnBack.addActionListener(e -> {
+            // Go back to Dashboard
+            Container topFrame = SwingUtilities.getWindowAncestor(this);
+            if(topFrame instanceof MainFrame) {
+                ((MainFrame) topFrame).switchPanel("Dashboard");
+            }
+        });
+
+// Add Back button to the button panel (below other buttons)
+        buttonPanel.add(btnBack);
+
+
 
         btnAdd = createButton("Add");
         btnUpdate = createButton("Update");
