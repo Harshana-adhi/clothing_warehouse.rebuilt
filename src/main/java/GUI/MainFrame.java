@@ -41,7 +41,6 @@ public class MainFrame extends JFrame {
         setVisible(true);
     }
 
-    // Show login panel
     public void showLoginPanel() {
         mainPanel.removeAll();
         mainPanel.add(new LoginPanel(this), "Login");
@@ -51,7 +50,6 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-    // Show signup panel
     public void showSignupPanel() {
         mainPanel.removeAll();
         mainPanel.add(new SignupPanel(this), "Signup");
@@ -61,7 +59,6 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-    // Load dashboard based on role
     public void loadDashboardByRole(String role, User user) {
         loggedInUser = user; // store current user
         mainPanel.removeAll();
@@ -89,9 +86,9 @@ public class MainFrame extends JFrame {
 
             case "staff":
                 StaffDashboardPanel staffDashboard = new StaffDashboardPanel(this);
-                CustomerPanel staffCustomerPanel = new CustomerPanel(loggedInUser); // <-- added for staff
+                CustomerPanel staffCustomerPanel = new CustomerPanel(loggedInUser);
                 mainPanel.add(staffDashboard, "Dashboard");
-                mainPanel.add(staffCustomerPanel, "Customer"); // <-- register customer panel
+                mainPanel.add(staffCustomerPanel, "Customer");
                 statusLabel.setText("Welcome Staff!");
                 break;
 
@@ -106,7 +103,6 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-    // Switch to a panel by name
     public void switchPanel(String panelName) {
         cardLayout.show(mainPanel, panelName);
         statusLabel.setText("You are in " + panelName + " module");
