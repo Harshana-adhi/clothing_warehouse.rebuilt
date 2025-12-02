@@ -29,6 +29,11 @@ public class ManagerDashboardPanel extends JPanel {
         JButton btnManageCustomers = createButton("Manage Customers"); // NEW
         btnManageCustomers.addActionListener(e -> mainFrame.switchPanel("Customer"));
 
+        JButton btnSuppliers = createButton("Supplier Management");
+        btnSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
+
+
+
         // Add buttons to panel
         buttonPanel.add(btnManageEmployees);
         buttonPanel.add(btnWarehouseStock);

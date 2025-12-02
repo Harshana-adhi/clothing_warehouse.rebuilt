@@ -28,9 +28,16 @@ public class StaffDashboardPanel extends JPanel {
         JButton btnViewCustomers = createButton("View Customers");
         btnViewCustomers.addActionListener(e -> mainFrame.switchPanel("Customer"));
 
+        JButton btnViewSuppliers = createButton("View Suppliers");
+        btnViewSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
+
+
+
+
         buttonPanel.add(btnBilling);
         buttonPanel.add(btnViewStock);
         buttonPanel.add(btnViewCustomers);
+        buttonPanel.add(btnViewSuppliers);
 
         // Back Button
         JButton btnBack = createBackButton("Back to Login");

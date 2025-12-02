@@ -35,7 +35,7 @@ public class MainFrame extends JFrame {
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         add(statusLabel, BorderLayout.SOUTH);
 
-        // Show login panel first
+        // Show login first
         showLoginPanel();
 
         setVisible(true);
@@ -64,31 +64,53 @@ public class MainFrame extends JFrame {
         mainPanel.removeAll();
 
         switch (role.toLowerCase()) {
+
+            // ---------------------------------------------------------
+            // ADMIN
+            // ---------------------------------------------------------
             case "admin":
                 AdminDashboardPanel adminDashboard = new AdminDashboardPanel(this);
                 EmployeePanel adminEmployeePanel = new EmployeePanel(loggedInUser);
                 CustomerPanel adminCustomerPanel = new CustomerPanel(loggedInUser);
+                SupplierPanel adminSupplierPanel = new SupplierPanel(loggedInUser); // NEW
+
                 mainPanel.add(adminDashboard, "Dashboard");
                 mainPanel.add(adminEmployeePanel, "Employee");
                 mainPanel.add(adminCustomerPanel, "Customer");
+                mainPanel.add(adminSupplierPanel, "Supplier"); // NEW
+
                 statusLabel.setText("Welcome Admin!");
                 break;
 
+            // ---------------------------------------------------------
+            // MANAGER
+            // ---------------------------------------------------------
             case "manager":
                 ManagerDashboardPanel managerDashboard = new ManagerDashboardPanel(this);
                 EmployeePanel managerEmployeePanel = new EmployeePanel(loggedInUser);
                 CustomerPanel managerCustomerPanel = new CustomerPanel(loggedInUser);
+                SupplierPanel managerSupplierPanel = new SupplierPanel(loggedInUser); // NEW
+
                 mainPanel.add(managerDashboard, "Dashboard");
                 mainPanel.add(managerEmployeePanel, "Employee");
                 mainPanel.add(managerCustomerPanel, "Customer");
+                mainPanel.add(managerSupplierPanel, "Supplier"); // NEW
+
                 statusLabel.setText("Welcome Manager!");
                 break;
 
+            // ---------------------------------------------------------
+            // STAFF
+            // ---------------------------------------------------------
             case "staff":
                 StaffDashboardPanel staffDashboard = new StaffDashboardPanel(this);
                 CustomerPanel staffCustomerPanel = new CustomerPanel(loggedInUser);
+                SupplierPanel staffSupplierPanel = new SupplierPanel(loggedInUser); // NEW (view-only assumed)
+
                 mainPanel.add(staffDashboard, "Dashboard");
                 mainPanel.add(staffCustomerPanel, "Customer");
+                mainPanel.add(staffSupplierPanel, "Supplier"); // NEW
+
                 statusLabel.setText("Welcome Staff!");
                 break;
 
