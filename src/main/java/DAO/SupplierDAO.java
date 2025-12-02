@@ -7,6 +7,7 @@ import Models.User;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class SupplierDAO {
 
@@ -128,5 +129,27 @@ public class SupplierDAO {
             System.out.println("Error checking Supplier ID: " + e.getMessage());
         }
         return false;
+    }
+
+    // ------------------- NEW METHOD -------------------
+    public Optional<Supplier> getSupplierById(String supplierId) {
+        String sql = "SELECT * FROM Supplier WHERE SupplierId = ?";
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, supplierId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Supplier sup = new Supplier(
+                            rs.getString("SupplierId"),
+                            rs.getString("SupName"),
+                            rs.getString("TellNo")
+                    );
+                    return Optional.of(sup);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error fetching supplier by ID: " + e.getMessage());
+        }
+        return Optional.empty();
     }
 }

@@ -27,16 +27,17 @@ public class ClothingItemDAO {
     }
 
     public boolean insert(ClothingItem item, User user) {
-        if (!hasPermission(user, "add") || item == null || item.getClothId().isEmpty()) return false;
-        String sql = "INSERT INTO ClothingItem (ClothId, Color, Material, category, Price, SupplierId) VALUES (?, ?, ?, ?, ?, ?)";
+        if (!hasPermission(user, "add") || item == null || item.getClothId() == null || item.getClothId().isEmpty())
+            return false;
+        // Note: Color removed from ClothingItem table — Color is stored in ClothingStock now.
+        String sql = "INSERT INTO ClothingItem (ClothId, Material, category, Price, SupplierId) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DBConnect.getDBConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, item.getClothId());
-            ps.setString(2, item.getColor());
-            ps.setString(3, item.getMaterial());
-            ps.setString(4, item.getCategory());
-            ps.setBigDecimal(5, item.getPrice());
-            ps.setString(6, item.getSupplierId());
+            ps.setString(2, item.getMaterial());
+            ps.setString(3, item.getCategory());
+            ps.setBigDecimal(4, item.getPrice());
+            ps.setString(5, item.getSupplierId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.out.println("Error inserting ClothingItem: " + e.getMessage());
@@ -45,16 +46,16 @@ public class ClothingItemDAO {
     }
 
     public boolean update(ClothingItem item, User user) {
-        if (!hasPermission(user, "update") || item == null || item.getClothId().isEmpty()) return false;
-        String sql = "UPDATE ClothingItem SET Color = ?, Material = ?, category = ?, Price = ?, SupplierId = ? WHERE ClothId = ?";
+        if (!hasPermission(user, "update") || item == null || item.getClothId() == null || item.getClothId().isEmpty())
+            return false;
+        String sql = "UPDATE ClothingItem SET Material = ?, category = ?, Price = ?, SupplierId = ? WHERE ClothId = ?";
         try (Connection conn = DBConnect.getDBConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, item.getColor());
-            ps.setString(2, item.getMaterial());
-            ps.setString(3, item.getCategory());
-            ps.setBigDecimal(4, item.getPrice());
-            ps.setString(5, item.getSupplierId());
-            ps.setString(6, item.getClothId());
+            ps.setString(1, item.getMaterial());
+            ps.setString(2, item.getCategory());
+            ps.setBigDecimal(3, item.getPrice());
+            ps.setString(4, item.getSupplierId());
+            ps.setString(5, item.getClothId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.out.println("Error updating ClothingItem: " + e.getMessage());
@@ -63,7 +64,7 @@ public class ClothingItemDAO {
     }
 
     public boolean delete(String clothId, User user) {
-        if (!hasPermission(user, "delete") || clothId.isEmpty()) return false;
+        if (!hasPermission(user, "delete") || clothId == null || clothId.isEmpty()) return false;
         String sql = "DELETE FROM ClothingItem WHERE ClothId = ?";
         try (Connection conn = DBConnect.getDBConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -76,7 +77,7 @@ public class ClothingItemDAO {
     }
 
     public ClothingItem getItemById(String clothId) {
-        String sql = "SELECT * FROM ClothingItem WHERE ClothId = ?";
+        String sql = "SELECT ClothId, Material, category, Price, SupplierId FROM ClothingItem WHERE ClothId = ?";
         try (Connection conn = DBConnect.getDBConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, clothId);
@@ -84,7 +85,6 @@ public class ClothingItemDAO {
                 if (rs.next()) {
                     return new ClothingItem(
                             rs.getString("ClothId"),
-                            rs.getString("Color"),
                             rs.getString("Material"),
                             rs.getString("category"),
                             rs.getBigDecimal("Price"),
@@ -100,14 +100,13 @@ public class ClothingItemDAO {
 
     public List<ClothingItem> getAll() {
         List<ClothingItem> list = new ArrayList<>();
-        String sql = "SELECT * FROM ClothingItem";
+        String sql = "SELECT ClothId, Material, category, Price, SupplierId FROM ClothingItem";
         try (Connection conn = DBConnect.getDBConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 list.add(new ClothingItem(
                         rs.getString("ClothId"),
-                        rs.getString("Color"),
                         rs.getString("Material"),
                         rs.getString("category"),
                         rs.getBigDecimal("Price"),
@@ -120,22 +119,22 @@ public class ClothingItemDAO {
         return list;
     }
 
-    // --- SEARCH by ClothId, Color, Material, or Category ---
+    // --- SEARCH by ClothId, Material, or Category ---
     public List<ClothingItem> search(String keyword) {
         List<ClothingItem> list = new ArrayList<>();
-        String sql = "SELECT * FROM ClothingItem WHERE ClothId LIKE ? OR Color LIKE ? OR Material LIKE ? OR category LIKE ?";
+        String sql = "SELECT ClothId, Material, category, Price, SupplierId FROM ClothingItem WHERE ClothId LIKE ? OR Material LIKE ? OR category LIKE ?";
         try (Connection conn = DBConnect.getDBConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             String pattern = "%" + keyword + "%";
-            ps.setString(1, pattern); ps.setString(2, pattern);
-            ps.setString(3, pattern); ps.setString(4, pattern);
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            ps.setString(3, pattern);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(new ClothingItem(
                             rs.getString("ClothId"),
-                            rs.getString("Color"),
                             rs.getString("Material"),
                             rs.getString("category"),
                             rs.getBigDecimal("Price"),
@@ -147,5 +146,21 @@ public class ClothingItemDAO {
             System.out.println("Error searching ClothingItems: " + e.getMessage());
         }
         return list;
+    }
+
+    // --- NEW METHOD: Get SupplierId by ClothId ---
+    public String getSupplierIdByClothId(String clothId) {
+        if (clothId == null || clothId.isEmpty()) return "";
+        String sql = "SELECT SupplierId FROM ClothingItem WHERE ClothId = ?";
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, clothId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("SupplierId");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error fetching SupplierId: " + e.getMessage());
+        }
+        return "";
     }
 }
