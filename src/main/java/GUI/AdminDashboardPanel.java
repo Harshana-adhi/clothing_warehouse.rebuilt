@@ -2,57 +2,67 @@ package GUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class AdminDashboardPanel extends JPanel {
+
+    private final Color buttonColor = new Color(0, 150, 136);
+    private final Color buttonHover = new Color(0, 137, 123);
+    private final Color dashboardBackBg = new Color(0, 180, 140);
+    private final Color dashboardBackHover = new Color(0, 160, 125);
+    private final Color panelBackground = new Color(245, 245, 245);
 
     public AdminDashboardPanel(MainFrame mainFrame) {
 
         setLayout(new BorderLayout());
-        setBackground(new Color(245, 245, 245));
+        setBackground(panelBackground);
 
-        // --- Title ---
         JLabel title = new JLabel("Admin Dashboard", SwingConstants.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 26));
         title.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
-        // --- Button Panel ---
-        JPanel buttonPanel = new JPanel(new GridLayout(4, 2, 15, 15)); // changed to 4 rows to add Customer button
-        buttonPanel.setBackground(new Color(245, 245, 245));
+        JPanel buttonPanel = new JPanel(new GridLayout(4, 2, 15, 15));
+        buttonPanel.setBackground(panelBackground);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 200, 30, 200));
 
         JButton btnManageEmployees = createButton("Manage Employees");
         btnManageEmployees.addActionListener(e -> mainFrame.switchPanel("Employee"));
 
         JButton btnManageUsers = createButton("Manage Users");
-        btnManageUsers.addActionListener(e -> mainFrame.switchPanel("User")); // only if UserPanel exists
+        btnManageUsers.addActionListener(e -> mainFrame.switchPanel("User"));
 
-        JButton btnWarehouseStock = createButton("Warehouse Stock");
-        JButton btnSuppliers = createButton(" Suppliers");
+        // ⭐ SINGLE STOCK MANAGEMENT BUTTON
+        JButton btnStockManagement = createButton("Stock Management");
+        btnStockManagement.addActionListener(e -> mainFrame.switchPanel("StockManagement"));
+
+        JButton btnSuppliers = createButton("Suppliers");
         btnSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
+
         JButton btnSalesBilling = createButton("Sales & Billing");
         JButton btnReports = createButton("Reports");
 
-        JButton btnManageCustomers = createButton("Manage Customers"); // NEW
+        JButton btnManageCustomers = createButton("Manage Customers");
         btnManageCustomers.addActionListener(e -> mainFrame.switchPanel("Customer"));
 
-        // Add buttons to panel
+        // ORDER UNCHANGED
         buttonPanel.add(btnManageEmployees);
         buttonPanel.add(btnManageUsers);
-        buttonPanel.add(btnWarehouseStock);
+        buttonPanel.add(btnStockManagement);
         buttonPanel.add(btnSuppliers);
         buttonPanel.add(btnSalesBilling);
         buttonPanel.add(btnReports);
-        buttonPanel.add(btnManageCustomers); // NEW
+        buttonPanel.add(btnManageCustomers);
+        buttonPanel.add(new JLabel("")); // keep 4x2 grid balanced
 
-        // --- Back Button ---
         JButton btnBack = createBackButton("Back to Login");
-        btnBack.addActionListener(e -> mainFrame.showLoginPanel()); // go back to login
+        btnBack.addActionListener(e -> mainFrame.showLoginPanel());
+
         JPanel backPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        backPanel.setBackground(new Color(245, 245, 245));
+        backPanel.setBackground(panelBackground);
         backPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 0, 0));
         backPanel.add(btnBack);
 
-        // --- Add components ---
         add(title, BorderLayout.NORTH);
         add(buttonPanel, BorderLayout.CENTER);
         add(backPanel, BorderLayout.SOUTH);
@@ -62,18 +72,13 @@ public class AdminDashboardPanel extends JPanel {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btn.setFocusPainted(false);
-        btn.setBackground(new Color(0, 150, 136));
+        btn.setBackground(buttonColor);
         btn.setForeground(Color.WHITE);
         btn.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(0, 137, 123));
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(0, 150, 136));
-            }
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent evt) { btn.setBackground(buttonHover); }
+            public void mouseExited(MouseEvent evt) { btn.setBackground(buttonColor); }
         });
 
         return btn;
@@ -83,19 +88,14 @@ public class AdminDashboardPanel extends JPanel {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setFocusPainted(false);
-        btn.setBackground(new Color(0, 180, 140)); // slightly different than other buttons
+        btn.setBackground(dashboardBackBg);
         btn.setForeground(Color.WHITE);
         btn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(0, 160, 125));
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(0, 180, 140));
-            }
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent evt) { btn.setBackground(dashboardBackHover); }
+            public void mouseExited(MouseEvent evt) { btn.setBackground(dashboardBackBg); }
         });
 
         return btn;

@@ -1,9 +1,9 @@
 package GUI;
 
 import Models.User;
-
 import javax.swing.*;
 import java.awt.*;
+
 
 public class MainFrame extends JFrame {
 
@@ -59,6 +59,9 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
+    // Add this import at the top
+
+
     public void loadDashboardByRole(String role, User user) {
         loggedInUser = user; // store current user
         mainPanel.removeAll();
@@ -72,12 +75,14 @@ public class MainFrame extends JFrame {
                 AdminDashboardPanel adminDashboard = new AdminDashboardPanel(this);
                 EmployeePanel adminEmployeePanel = new EmployeePanel(loggedInUser);
                 CustomerPanel adminCustomerPanel = new CustomerPanel(loggedInUser);
-                SupplierPanel adminSupplierPanel = new SupplierPanel(loggedInUser); // NEW
+                SupplierPanel adminSupplierPanel = new SupplierPanel(loggedInUser);
+                StockManagementPanel adminStockPanel = new StockManagementPanel(loggedInUser); // NEW
 
                 mainPanel.add(adminDashboard, "Dashboard");
                 mainPanel.add(adminEmployeePanel, "Employee");
                 mainPanel.add(adminCustomerPanel, "Customer");
-                mainPanel.add(adminSupplierPanel, "Supplier"); // NEW
+                mainPanel.add(adminSupplierPanel, "Supplier");
+                mainPanel.add(adminStockPanel, "StockManagement"); // NEW
 
                 statusLabel.setText("Welcome Admin!");
                 break;
@@ -89,12 +94,14 @@ public class MainFrame extends JFrame {
                 ManagerDashboardPanel managerDashboard = new ManagerDashboardPanel(this);
                 EmployeePanel managerEmployeePanel = new EmployeePanel(loggedInUser);
                 CustomerPanel managerCustomerPanel = new CustomerPanel(loggedInUser);
-                SupplierPanel managerSupplierPanel = new SupplierPanel(loggedInUser); // NEW
+                SupplierPanel managerSupplierPanel = new SupplierPanel(loggedInUser);
+                StockManagementPanel managerStockPanel = new StockManagementPanel(loggedInUser); // NEW
 
                 mainPanel.add(managerDashboard, "Dashboard");
                 mainPanel.add(managerEmployeePanel, "Employee");
                 mainPanel.add(managerCustomerPanel, "Customer");
-                mainPanel.add(managerSupplierPanel, "Supplier"); // NEW
+                mainPanel.add(managerSupplierPanel, "Supplier");
+                mainPanel.add(managerStockPanel, "StockManagement"); // NEW
 
                 statusLabel.setText("Welcome Manager!");
                 break;
@@ -105,11 +112,13 @@ public class MainFrame extends JFrame {
             case "staff":
                 StaffDashboardPanel staffDashboard = new StaffDashboardPanel(this);
                 CustomerPanel staffCustomerPanel = new CustomerPanel(loggedInUser);
-                SupplierPanel staffSupplierPanel = new SupplierPanel(loggedInUser); // NEW (view-only assumed)
+                SupplierPanel staffSupplierPanel = new SupplierPanel(loggedInUser);
+                StockManagementPanel staffStockPanel = new StockManagementPanel(loggedInUser); // NEW
 
                 mainPanel.add(staffDashboard, "Dashboard");
                 mainPanel.add(staffCustomerPanel, "Customer");
-                mainPanel.add(staffSupplierPanel, "Supplier"); // NEW
+                mainPanel.add(staffSupplierPanel, "Supplier");
+                mainPanel.add(staffStockPanel, "StockManagement"); // NEW
 
                 statusLabel.setText("Welcome Staff!");
                 break;
@@ -124,6 +133,7 @@ public class MainFrame extends JFrame {
         revalidate();
         repaint();
     }
+
 
     public void switchPanel(String panelName) {
         cardLayout.show(mainPanel, panelName);

@@ -15,31 +15,33 @@ public class ManagerDashboardPanel extends JPanel {
         title.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
         // --- Button Panel ---
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 15, 15)); // enough rows for customer button
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 15, 15));
         buttonPanel.setBackground(new Color(245, 245, 245));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 200, 30, 200));
 
         JButton btnManageEmployees = createButton("Manage Employees");
         btnManageEmployees.addActionListener(e -> mainFrame.switchPanel("Employee"));
 
-        JButton btnWarehouseStock = createButton("Warehouse Stock");
+        // ⭐ SINGLE STOCK MANAGEMENT BUTTON
+        JButton btnStockManagement = createButton("Stock Management");
+        btnStockManagement.addActionListener(e -> mainFrame.switchPanel("StockManagement"));
+
         JButton btnSalesBilling = createButton("Sales & Billing");
         JButton btnReports = createButton("Reports");
 
-        JButton btnManageCustomers = createButton("Manage Customers"); // NEW
+        JButton btnManageCustomers = createButton("Manage Customers");
         btnManageCustomers.addActionListener(e -> mainFrame.switchPanel("Customer"));
 
         JButton btnSuppliers = createButton("Supplier Management");
         btnSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
 
-
-
-        // Add buttons to panel
+        // ADD buttons in order
         buttonPanel.add(btnManageEmployees);
-        buttonPanel.add(btnWarehouseStock);
+        buttonPanel.add(btnStockManagement);
         buttonPanel.add(btnSalesBilling);
         buttonPanel.add(btnReports);
         buttonPanel.add(btnManageCustomers);
+        buttonPanel.add(btnSuppliers);
 
         // --- Back Button ---
         JButton btnBack = createBackButton("Back to Login");
@@ -50,7 +52,6 @@ public class ManagerDashboardPanel extends JPanel {
         backPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 0));
         backPanel.add(btnBack);
 
-        // Add components
         add(title, BorderLayout.NORTH);
         add(buttonPanel, BorderLayout.CENTER);
         add(backPanel, BorderLayout.SOUTH);
@@ -65,12 +66,8 @@ public class ManagerDashboardPanel extends JPanel {
         btn.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(25, 118, 210));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(33, 150, 243));
-            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(25, 118, 210)); }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(33, 150, 243)); }
         });
 
         return btn;
@@ -86,12 +83,8 @@ public class ManagerDashboardPanel extends JPanel {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(0, 160, 125));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(0, 180, 140));
-            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(0, 160, 125)); }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(0, 180, 140)); }
         });
 
         return btn;

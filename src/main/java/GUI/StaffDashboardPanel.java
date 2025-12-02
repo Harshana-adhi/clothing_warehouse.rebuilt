@@ -22,8 +22,9 @@ public class StaffDashboardPanel extends JPanel {
         JButton btnBilling = createButton("Billing");
         btnBilling.addActionListener(e -> mainFrame.switchPanel("Billing"));
 
-        JButton btnViewStock = createButton("View Stock");
-        btnViewStock.addActionListener(e -> mainFrame.switchPanel("WarehouseStock"));
+        // ⭐ SINGLE STOCK MANAGEMENT BUTTON
+        JButton btnStockManagement = createButton("Stock Management");
+        btnStockManagement.addActionListener(e -> mainFrame.switchPanel("StockManagement"));
 
         JButton btnViewCustomers = createButton("View Customers");
         btnViewCustomers.addActionListener(e -> mainFrame.switchPanel("Customer"));
@@ -31,11 +32,9 @@ public class StaffDashboardPanel extends JPanel {
         JButton btnViewSuppliers = createButton("View Suppliers");
         btnViewSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
 
-
-
-
+        // ADD buttons
         buttonPanel.add(btnBilling);
-        buttonPanel.add(btnViewStock);
+        buttonPanel.add(btnStockManagement);
         buttonPanel.add(btnViewCustomers);
         buttonPanel.add(btnViewSuppliers);
 
@@ -48,7 +47,6 @@ public class StaffDashboardPanel extends JPanel {
         backPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 0, 0));
         backPanel.add(btnBack);
 
-        // Add components
         add(title, BorderLayout.NORTH);
         add(buttonPanel, BorderLayout.CENTER);
         add(backPanel, BorderLayout.SOUTH);
@@ -63,12 +61,8 @@ public class StaffDashboardPanel extends JPanel {
         btn.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(142, 36, 170));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(156, 39, 176));
-            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(142, 36, 170)); }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(156, 39, 176)); }
         });
 
         return btn;
@@ -84,12 +78,8 @@ public class StaffDashboardPanel extends JPanel {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(0, 160, 125));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(0, 180, 140));
-            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(0, 160, 125)); }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(new Color(0, 180, 140)); }
         });
 
         return btn;

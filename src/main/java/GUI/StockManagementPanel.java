@@ -131,8 +131,8 @@ public class StockManagementPanel extends JPanel {
 
         // Back button listener placeholder
         btnBack.addActionListener(e -> {
-            // Container topFrame = SwingUtilities.getWindowAncestor(this);
-            // if(topFrame instanceof MainFrame) ((MainFrame)topFrame).switchPanel("Dashboard");
+             Container topFrame = SwingUtilities.getWindowAncestor(this);
+             if(topFrame instanceof MainFrame) ((MainFrame)topFrame).switchPanel("Dashboard");
         });
 
         buttonPanel.add(btnBack);
@@ -383,10 +383,47 @@ public class StockManagementPanel extends JPanel {
     }
 
     private void searchStock(){
-        // Implement search logic here, using a modified DAO method to search the joined table.
         String keyword = txtSearch.getText().trim();
-        if(keyword.isEmpty()){ loadStockData(); return; }
-        // Placeholder: Implement a stockDAO.searchByKeyword(keyword) method.
-        JOptionPane.showMessageDialog(this, "Search by keyword '" + keyword + "' functionality needs implementation in DAO.");
+        tableModel.setRowCount(0); // clear table
+
+        if(keyword.isEmpty()){
+            loadStockData();
+            return;
+        }
+
+        try {
+            List<ClothingItem> items = itemDAO.search(keyword);
+            for(ClothingItem item : items){
+                // Fetch stock info for each size/quantity
+                List<String[]> stockList = stockDAO.getStockByClothId(item.getClothId());
+                if(stockList.isEmpty()){
+                    // If no stock, just show 0 quantity with placeholder size "-"
+                    tableModel.addRow(new String[]{
+                            item.getClothId(),
+                            item.getColor(),
+                            item.getMaterial(),
+                            item.getCategory(),
+                            "-",
+                            "0",
+                            item.getPrice().toString()
+                    });
+                } else {
+                    for(String[] stockRow : stockList){
+                        tableModel.addRow(new String[]{
+                                item.getClothId(),
+                                item.getColor(),
+                                item.getMaterial(),
+                                item.getCategory(),
+                                stockRow[0], // Size
+                                stockRow[1], // Quantity
+                                item.getPrice().toString()
+                        });
+                    }
+                }
+            }
+        } catch(Exception e){
+            JOptionPane.showMessageDialog(this,"Search error: " + e.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+        }
     }
+
 }
