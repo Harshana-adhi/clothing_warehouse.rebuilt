@@ -107,7 +107,7 @@ public class PaymentDAO {
     public Payment getById(int paymentId, User user){
         if(!hasPermission(user, "view")) return null;
 
-        String sql = "SELECT PaymentId, PayType, Amount, PayDate, EmployeeId, CustomerId FROM Payment WHERE PaymentId=?";
+        String sql = "SELECT PaymentId, PayType, Amount, PayDate, EmployeeId, CustomerId FROM Payment WHERE PaymentId=? ORDER BY PaymentId DESC";
         try(Connection conn = DBConnect.getDBConnection();
             PreparedStatement ps = conn.prepareStatement(sql)){
 

@@ -28,9 +28,7 @@ public class BillingDAO {
         }
     }
 
-    // Insert Bill with multiple items and automatic payment
-    // Overloaded method to specify EmployeeId in Payment
-    public Integer insertWithPaymentAndDetails(Billing bill, List<BillDetails> items, User user, String employeeId) {
+    public Integer insertWithPaymentAndDetails(Billing bill, List<BillDetails> items, User user, String employeeId, String paymentType) {
         if(!hasPermission(user, "add") || bill == null || items == null || items.isEmpty()) return null;
 
         Connection conn = null;
@@ -38,21 +36,18 @@ public class BillingDAO {
             conn = DBConnect.getDBConnection();
             conn.setAutoCommit(false);
 
-            // 1️⃣ Create Payment with given EmployeeId
             PaymentDAO paymentDAO = new PaymentDAO();
             BigDecimal totalAmount = items.stream()
                     .map(BillDetails::getTotalAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            Payment payment = new Payment("Cash", totalAmount, new java.util.Date(), employeeId, bill.getCustomerId());
-            boolean inserted = paymentDAO.insert(payment, user); // existing insert method
-            if(!inserted){
+            Payment payment = new Payment(paymentType, totalAmount, new java.util.Date(), employeeId, bill.getCustomerId());
+            if(!paymentDAO.insert(payment, user)){
                 conn.rollback();
                 return null;
             }
             Integer paymentId = payment.getPaymentId();
 
-            // 2️⃣ Insert Billing
             bill.setPaymentId(paymentId);
             bill.setAmount(totalAmount);
             bill.setBillDate(new java.util.Date());
@@ -67,8 +62,7 @@ public class BillingDAO {
                 psBill.setInt(5, bill.getPaymentId());
                 psBill.setString(6, bill.getCustomerId());
 
-                int affected = psBill.executeUpdate();
-                if(affected == 0){
+                if(psBill.executeUpdate() == 0){
                     conn.rollback();
                     return null;
                 }
@@ -81,15 +75,16 @@ public class BillingDAO {
                 }
             }
 
-            // 3️⃣ Insert BillDetails
             String sqlDetail = "INSERT INTO BillDetails (BillId, StockId, Quantity, TotalAmount) VALUES (?,?,?,?)";
             try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail)) {
                 for(BillDetails item : items){
                     psDetail.setInt(1, bill.getBillId());
                     if(item.getStockId() != null) psDetail.setInt(2, item.getStockId());
                     else psDetail.setNull(2, Types.INTEGER);
+
                     psDetail.setInt(3, item.getQuantity());
                     psDetail.setBigDecimal(4, item.getTotalAmount());
+
                     psDetail.addBatch();
                 }
                 psDetail.executeBatch();
@@ -107,9 +102,6 @@ public class BillingDAO {
         return null;
     }
 
-
-
-    // Update billing (admin/manager)
     public boolean update(Billing bill, User user){
         if(!hasPermission(user, "update") || bill == null) return false;
 
@@ -133,7 +125,6 @@ public class BillingDAO {
         return false;
     }
 
-    // Delete billing (admin/manager)
     public boolean delete(int billId, User user){
         if(!hasPermission(user, "delete")) return false;
 
@@ -148,7 +139,6 @@ public class BillingDAO {
         return false;
     }
 
-    // Get billing by ID
     public Billing getById(int billId){
         String sql = "SELECT BillId, BillDate, Amount, BillDescription, BillStatus, PaymentId, CustomerId FROM Billing WHERE BillId=?";
         try(Connection conn = DBConnect.getDBConnection();
@@ -174,7 +164,6 @@ public class BillingDAO {
         return null;
     }
 
-    // Get all bills
     public List<Billing> getAll(){
         List<Billing> list = new ArrayList<>();
         String sql = "SELECT BillId, BillDate, Amount, BillDescription, BillStatus, PaymentId, CustomerId FROM Billing ORDER BY BillDate DESC";

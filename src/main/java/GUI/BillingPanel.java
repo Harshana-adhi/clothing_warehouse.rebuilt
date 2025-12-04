@@ -23,9 +23,8 @@ public class BillingPanel extends JPanel {
 
     private User currentUser;
 
-    private JComboBox<String> cmbCustomer, cmbItem;
-    private JTextField txtQuantity, txtEmployeeId;
-    // New button added
+    private JComboBox<String> cmbCustomer, cmbItem, cmbPaymentType;
+    private JTextField txtQuantity, txtEmployeeId, txtBillDescription;
     private JButton btnAddItem, btnSaveBill, btnRefreshItems, btnBack, btnClearItems;
 
     private JTable tblItems;
@@ -58,7 +57,6 @@ public class BillingPanel extends JPanel {
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(Color.WHITE);
 
-        // ================= LEFT FORM PANEL (WEST component for JSplitPane) =================
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(Color.WHITE);
         formPanel.setBorder(new TitledBorder("Create Bill"));
@@ -73,9 +71,10 @@ public class BillingPanel extends JPanel {
         loadCustomers();
 
         txtEmployeeId = new JTextField();
+        txtBillDescription = new JTextField();
+        cmbPaymentType = new JComboBox<>(new String[]{"Cash", "Card", "Online"});
         cmbItem = new JComboBox<>();
         loadItems();
-
         txtQuantity = new JTextField();
 
         int componentHeight = 35;
@@ -83,26 +82,27 @@ public class BillingPanel extends JPanel {
 
         cmbCustomer.setPreferredSize(inputDim);
         txtEmployeeId.setPreferredSize(inputDim);
+        txtBillDescription.setPreferredSize(inputDim);
+        cmbPaymentType.setPreferredSize(inputDim);
         cmbItem.setPreferredSize(inputDim);
         txtQuantity.setPreferredSize(inputDim);
 
         Dimension buttonDim = new Dimension(LEFT_PANEL_NOMINAL_WIDTH, componentHeight + 5);
 
         btnAddItem = new JButton("Add Item");
-        // New button initialization
         btnClearItems = new JButton("Clear Items");
         btnSaveBill = new JButton("Save Bill");
         btnRefreshItems = new JButton("Refresh Items");
         btnBack = new JButton("⬅ Back");
 
         btnAddItem.setPreferredSize(buttonDim);
-        btnClearItems.setPreferredSize(buttonDim); // Set size for new button
+        btnClearItems.setPreferredSize(buttonDim);
         btnSaveBill.setPreferredSize(buttonDim);
         btnRefreshItems.setPreferredSize(buttonDim);
         btnBack.setPreferredSize(buttonDim);
 
         styleGreenButton(btnAddItem);
-        styleRedButton(btnClearItems); // Style the clear button red for visibility
+        styleRedButton(btnClearItems);
         styleGreenButton(btnSaveBill);
         styleGreenButton(btnRefreshItems);
         styleGreenButton(btnBack);
@@ -110,106 +110,94 @@ public class BillingPanel extends JPanel {
         int y = 0;
 
         // Customer
-        gbc.gridx = 0; gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE; formPanel.add(new JLabel("Customer"), gbc);
-        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL; formPanel.add(cmbCustomer, gbc);
+        gbc.gridx = 0; gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel("Customer"), gbc);
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(cmbCustomer, gbc);
 
         // Employee ID
-        gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE; formPanel.add(new JLabel("Employee ID"), gbc);
-        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL; formPanel.add(txtEmployeeId, gbc);
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel("Employee ID"), gbc);
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(txtEmployeeId, gbc);
+
+        // Payment Type
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel("Payment Type"), gbc);
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(cmbPaymentType, gbc);
+
+        // Bill Description
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel("Bill Description (optional)"), gbc);
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(txtBillDescription, gbc);
 
         // Item
-        gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE; formPanel.add(new JLabel("Item"), gbc);
-        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL; formPanel.add(cmbItem, gbc);
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel("Item"), gbc);
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(cmbItem, gbc);
 
         // Quantity
-        gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE; formPanel.add(new JLabel("Quantity"), gbc);
-        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL; formPanel.add(txtQuantity, gbc);
-
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.NONE;
+        formPanel.add(new JLabel("Quantity"), gbc);
+        gbc.gridy = y++; gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(txtQuantity, gbc);
 
         // Buttons
-        gbc.gridy = y++; gbc.fill = GridBagConstraints.HORIZONTAL;
-        formPanel.add(btnAddItem, gbc);
+        gbc.gridy = y++; gbc.fill = GridBagConstraints.HORIZONTAL; formPanel.add(btnAddItem, gbc);
+        gbc.gridy = y++; formPanel.add(btnClearItems, gbc);
+        gbc.gridy = y++; formPanel.add(btnSaveBill, gbc);
+        gbc.gridy = y++; formPanel.add(btnRefreshItems, gbc);
+        gbc.gridy = y++; formPanel.add(btnBack, gbc);
 
-        // New button placement
-        gbc.gridy = y++;
-        formPanel.add(btnClearItems, gbc);
-
-        gbc.gridy = y++;
-        formPanel.add(btnSaveBill, gbc);
-
-        gbc.gridy = y++;
-        formPanel.add(btnRefreshItems, gbc);
-
-        gbc.gridy = y++;
-        formPanel.add(btnBack, gbc);
-
-        // ================= RIGHT PANEL (EAST component for JSplitPane) =================
-
-        // --- 1. Current Bill Items Table (New Top Table on the right) ---
+        // Tables
         tableModel = new DefaultTableModel(
                 new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Unit Price", "Total"}, 0);
         tblItems = new JTable(tableModel);
         JScrollPane currentBillScroll = new JScrollPane(tblItems);
 
-        // --- 2. Past Bills Table (tblBills) ---
         billTableModel = new DefaultTableModel(
-                new String[]{"Bill ID", "Customer", "Date", "Amount"}, 0);
+                new String[]{"Bill ID", "Customer", "Date", "Amount", "Description"}, 0);
         tblBills = new JTable(billTableModel);
         JScrollPane pastBillScroll = new JScrollPane(tblBills);
 
-        // --- Separator Label (Between 2nd and 3rd table) ---
         JLabel billItemsLabel = new JLabel("Items in the selected bill", SwingConstants.CENTER);
         billItemsLabel.setFont(new java.awt.Font("Segoe UI", Font.BOLD, 14));
         billItemsLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         billItemsLabel.setMinimumSize(new Dimension(1, 30));
         billItemsLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
-        // --- 3. Bill Details Table (tblBillDetails) ---
         billDetailsTableModel = new DefaultTableModel(
-                new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Total"}, 0);
+                new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Unit Price", "Total"}, 0);
         tblBillDetails = new JTable(billDetailsTableModel);
         JScrollPane billDetailsScroll = new JScrollPane(tblBillDetails);
 
-        // Container for Label + Details (3rd component)
         JPanel detailsContainer = new JPanel(new BorderLayout());
         detailsContainer.add(billItemsLabel, BorderLayout.NORTH);
         detailsContainer.add(billDetailsScroll, BorderLayout.CENTER);
 
-        // 2. Split between 2nd Table and 3rd Component
         JSplitPane billsAndDetailsSplit = new JSplitPane(
-                JSplitPane.VERTICAL_SPLIT,
-                pastBillScroll,       // 2nd Table (Past Bills)
-                detailsContainer      // Label + 3rd Table (Details)
-        );
+                JSplitPane.VERTICAL_SPLIT, pastBillScroll, detailsContainer);
         billsAndDetailsSplit.setResizeWeight(0.5);
         billsAndDetailsSplit.setOneTouchExpandable(true);
 
-        // Add a title above the past bills section
         JPanel pastBillsTitle = new JPanel(new BorderLayout());
         pastBillsTitle.add(new JLabel("Past Bills", SwingConstants.CENTER), BorderLayout.NORTH);
         pastBillsTitle.add(billsAndDetailsSplit, BorderLayout.CENTER);
 
-        // 1. Main Split (1st Table vs. Everything Else)
         JSplitPane mainVerticalSplit = new JSplitPane(
-                JSplitPane.VERTICAL_SPLIT,
-                currentBillScroll, // 1st Table (Current Bill Items)
-                pastBillsTitle     // 2nd Table + Label + 3rd Table
-        );
+                JSplitPane.VERTICAL_SPLIT, currentBillScroll, pastBillsTitle);
         mainVerticalSplit.setResizeWeight(0.33);
         mainVerticalSplit.setOneTouchExpandable(true);
 
-        // Wrap the final right panel stack in a titled container for clarity
         JPanel rightPanelWrapper = new JPanel(new BorderLayout());
         rightPanelWrapper.setBorder(new TitledBorder("Transaction History & Current Bill"));
         rightPanelWrapper.add(mainVerticalSplit, BorderLayout.CENTER);
 
-        // ================= MAIN LAYOUT (HORIZONTAL SPLIT) =================
-
         JSplitPane mainHorizontalSplit = new JSplitPane(
-                JSplitPane.HORIZONTAL_SPLIT,
-                formPanel,
-                rightPanelWrapper
-        );
+                JSplitPane.HORIZONTAL_SPLIT, formPanel, rightPanelWrapper);
         mainHorizontalSplit.setResizeWeight(0.35);
         mainHorizontalSplit.setOneTouchExpandable(true);
 
@@ -217,7 +205,7 @@ public class BillingPanel extends JPanel {
 
         // ================== EVENT LISTENERS ==================
         btnAddItem.addActionListener(e -> addItem());
-        btnClearItems.addActionListener(e -> clearCurrentBillItems()); // New listener
+        btnClearItems.addActionListener(e -> clearCurrentBillItems());
         btnSaveBill.addActionListener(e -> saveBill());
         btnRefreshItems.addActionListener(e -> loadItems());
 
@@ -301,7 +289,6 @@ public class BillingPanel extends JPanel {
         txtQuantity.setText("");
     }
 
-    // New method to clear the current bill items
     private void clearCurrentBillItems() {
         if (tableModel.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "The current bill is already empty.");
@@ -326,30 +313,40 @@ public class BillingPanel extends JPanel {
         int cSel = cmbCustomer.getSelectedIndex();
         if (cSel < 0) return;
 
-        String customerId = customerList.get(cSel).getCustomerId();
+        Customer selectedCustomer = customerList.get(cSel);
+        String customerId = selectedCustomer.getCustomerId();
+        String customerName = selectedCustomer.getCusName();
+
         String employeeId = txtEmployeeId.getText().trim();
         if (employeeId.isEmpty()) return;
 
+        String paymentType = (String) cmbPaymentType.getSelectedItem();
+
         Billing bill = new Billing();
         bill.setBillDate(java.sql.Date.valueOf(LocalDate.now()));
-        bill.setBillDescription("Bill for " + customerId);
+
+        String desc = txtBillDescription.getText().trim();
+        bill.setBillDescription(desc.isEmpty() ? null : desc);
         bill.setCustomerId(customerId);
 
+        // Pass paymentType to DAO
         Integer billId = billingDAO.insertWithPaymentAndDetails(
-                bill, billItems, currentUser, employeeId);
+                bill, billItems, currentUser, employeeId, paymentType);
 
         if (billId == null) return;
 
-        generateProfessionalPDF(billId, customerId, employeeId);
+        generateProfessionalPDF(billId, customerId, customerName, employeeId, desc, paymentType);
 
         tableModel.setRowCount(0);
         billItems.clear();
         txtEmployeeId.setText("");
+        txtBillDescription.setText("");
+        cmbPaymentType.setSelectedIndex(0);
         refreshBillTable();
-        loadItems(); // refresh items after saving
+        loadItems();
     }
 
-    private void generateProfessionalPDF(int billId, String customerId, String employeeId) {
+    private void generateProfessionalPDF(int billId, String customerId, String customerName, String employeeId, String description, String paymentType) {
         try {
             Document doc = new Document();
             PdfWriter.getInstance(doc, new FileOutputStream("Bill_" + billId + ".pdf"));
@@ -359,15 +356,18 @@ public class BillingPanel extends JPanel {
 
             doc.add(new Paragraph("CLOTHING WAREHOUSE BILL", titleFont));
             doc.add(new Paragraph("Bill ID: " + billId));
-            doc.add(new Paragraph("Customer: " + customerId));
+            doc.add(new Paragraph("Customer ID: " + customerId));
+            doc.add(new Paragraph("Customer Name: " + customerName));
             doc.add(new Paragraph("Employee: " + employeeId));
+            doc.add(new Paragraph("Payment Type: " + paymentType));
+            if(description != null) doc.add(new Paragraph("Description: " + description));
             doc.add(new Paragraph("Date: " + LocalDate.now()));
             doc.add(new Paragraph(" "));
 
-            PdfPTable table = new PdfPTable(7);
+            PdfPTable table = new PdfPTable(8);
             table.setWidthPercentage(100);
 
-            String[] headers = {"Stock", "Cloth", "Category", "Color", "Size", "Qty", "Total"};
+            String[] headers = {"Stock", "Item ID", "Category", "Color", "Size", "Qty", "Unit Price", "Total"};
             for (String h : headers) table.addCell(h);
 
             BigDecimal grandTotal = BigDecimal.ZERO;
@@ -375,6 +375,7 @@ public class BillingPanel extends JPanel {
             for (BillDetails bd : billItems) {
                 Object[] info = stockDAO.getStockInfoByStockId(bd.getStockId());
                 String category = info.length > 4 && info[4] != null ? info[4].toString() : "-";
+                BigDecimal unitPrice = (BigDecimal) info[3];
 
                 table.addCell(String.valueOf(bd.getStockId()));
                 table.addCell(info[0].toString());
@@ -382,6 +383,7 @@ public class BillingPanel extends JPanel {
                 table.addCell(info[1].toString());
                 table.addCell(info[2].toString());
                 table.addCell(String.valueOf(bd.getQuantity()));
+                table.addCell(unitPrice.toString());
                 table.addCell(bd.getTotalAmount().toString());
 
                 grandTotal = grandTotal.add(bd.getTotalAmount());
@@ -403,7 +405,8 @@ public class BillingPanel extends JPanel {
                     " " + b.getBillId(),
                     " " + b.getCustomerId(),
                     " " + b.getBillDate(),
-                    " " + b.getAmount()
+                    " " + b.getAmount(),
+                    b.getBillDescription() != null ? b.getBillDescription() : ""
             });
         }
     }
@@ -419,9 +422,10 @@ public class BillingPanel extends JPanel {
         for (BillDetails bd : list) {
             Object[] info = stockDAO.getStockInfoByStockId(bd.getStockId());
             String category = info.length > 4 && info[4] != null ? info[4].toString() : "-";
+            BigDecimal unitPrice = (BigDecimal) info[3];
 
             billDetailsTableModel.addRow(new Object[]{
-                    bd.getStockId(), info[0], category, info[1], info[2], bd.getQuantity(), bd.getTotalAmount()
+                    bd.getStockId(), info[0], category, info[1], info[2], bd.getQuantity(), unitPrice, bd.getTotalAmount()
             });
         }
     }
