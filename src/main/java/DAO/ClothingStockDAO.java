@@ -7,6 +7,7 @@ import Models.User;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class ClothingStockDAO {
 
@@ -22,7 +23,6 @@ public class ClothingStockDAO {
         }
     }
 
-    // Add or update stock (now includes Color)
     public boolean restockItem(ClothingStock stock, User user) {
         if (!hasPermission(user, "restock") || stock == null || stock.getClothId() == null || stock.getClothId().isEmpty())
             return false;
@@ -61,68 +61,60 @@ public class ClothingStockDAO {
         }
     }
 
-    // Get stock details for display (all items). Join now uses ClothingStock.color (stock level color).
-    public List<String[]> getAllStockDetails() throws SQLException {
-        List<String[]> list = new ArrayList<>();
-        String sql = "SELECT cs.ClothId, cs.Color, ci.Material, ci.category, cs.Size, cs.Quantity, ci.RetailPrice " +
+    // ================== BILLING METHODS ==================
+
+    // For combo box: include category
+    public List<Object[]> getAllStockForBilling() {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT cs.StockId, cs.ClothId, cs.Color, cs.Size, cs.Quantity, ci.RetailPrice, ci.Category " +
                 "FROM ClothingStock cs " +
-                "INNER JOIN ClothingItem ci ON cs.ClothId = ci.ClothId " +
-                "ORDER BY cs.ClothId, cs.Color, cs.Size";
+                "JOIN ClothingItem ci ON cs.ClothId = ci.ClothId";
+
         try (Connection conn = DBConnect.getDBConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
             while (rs.next()) {
-                list.add(new String[]{
+                list.add(new Object[]{
+                        rs.getInt("StockId"),
                         rs.getString("ClothId"),
-                        rs.getString("Color") != null ? rs.getString("Color") : "-",
-                        rs.getString("Material"),
-                        rs.getString("category"),
-                        rs.getString("Size") != null ? rs.getString("Size") : "-",
-                        String.valueOf(rs.getInt("Quantity")),
-                        rs.getBigDecimal("RetailPrice").toString()
+                        rs.getString("Color"),
+                        rs.getString("Size"),
+                        rs.getInt("Quantity"),
+                        rs.getBigDecimal("RetailPrice"),
+                        rs.getString("Category") // ✅ Added
                 });
             }
-        }
-        return list;
-    }
-
-
-    // Return stock rows for a given clothId: each row => [Color, Size, Quantity]
-    public List<String[]> getStockByClothId(String clothId) throws SQLException {
-        List<String[]> list = new ArrayList<>();
-        String sql = "SELECT Color, Size, Quantity FROM ClothingStock WHERE ClothId = ? ORDER BY Color, Size";
-        try (Connection conn = DBConnect.getDBConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, clothId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(new String[]{
-                            rs.getString("Color"),
-                            rs.getString("Size"),
-                            String.valueOf(rs.getInt("Quantity"))
-                    });
-                }
-            }
-        }
-        return list;
-    }
-
-    // Optionally: delete stock by clothId/color/size if needed (not used in current panel)
-    public boolean deleteStockRow(String clothId, String color, String size, User user) {
-        if (user == null) return false;
-        String role = user.getRole().toLowerCase();
-        if (!(role.equals("admin") || role.equals("manager"))) return false;
-
-        String sql = "DELETE FROM ClothingStock WHERE ClothId = ? AND Color = ? AND Size = ?";
-        try (Connection conn = DBConnect.getDBConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, clothId);
-            ps.setString(2, color);
-            ps.setString(3, size);
-            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("Error deleting stock row: " + e.getMessage());
-            return false;
+            System.out.println("Billing Stock Load Error: " + e.getMessage());
         }
+        return list;
+    }
+
+    // For bill details: include category
+    public Object[] getStockInfoByStockId(int stockId) {
+        String sql = "SELECT cs.ClothId, cs.Color, cs.Size, ci.RetailPrice, ci.Category " +
+                "FROM ClothingStock cs " +
+                "JOIN ClothingItem ci ON cs.ClothId = ci.ClothId " +
+                "WHERE cs.StockId=?";
+
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, stockId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new Object[]{
+                        rs.getString("ClothId"),
+                        rs.getString("Color"),
+                        rs.getString("Size"),
+                        rs.getBigDecimal("RetailPrice"),
+                        rs.getString("Category") // ✅ Added
+                };
+            }
+        } catch (SQLException e) {
+            System.out.println("StockInfo Load Error: " + e.getMessage());
+        }
+        return null;
     }
 }

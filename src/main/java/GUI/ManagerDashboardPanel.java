@@ -22,11 +22,12 @@ public class ManagerDashboardPanel extends JPanel {
         JButton btnManageEmployees = createButton("Manage Employees");
         btnManageEmployees.addActionListener(e -> mainFrame.switchPanel("Employee"));
 
-        // ⭐ SINGLE STOCK MANAGEMENT BUTTON
         JButton btnStockManagement = createButton("Stock Management");
         btnStockManagement.addActionListener(e -> mainFrame.switchPanel("StockManagement"));
 
         JButton btnSalesBilling = createButton("Sales & Billing");
+        btnSalesBilling.addActionListener(e -> mainFrame.switchPanel("Billing")); // ✅ Fixed
+
         JButton btnReports = createButton("Reports");
 
         JButton btnManageCustomers = createButton("Manage Customers");

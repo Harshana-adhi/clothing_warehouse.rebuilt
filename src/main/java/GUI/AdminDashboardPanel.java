@@ -32,7 +32,6 @@ public class AdminDashboardPanel extends JPanel {
         JButton btnManageUsers = createButton("Manage Users");
         btnManageUsers.addActionListener(e -> mainFrame.switchPanel("User"));
 
-        // ⭐ SINGLE STOCK MANAGEMENT BUTTON
         JButton btnStockManagement = createButton("Stock Management");
         btnStockManagement.addActionListener(e -> mainFrame.switchPanel("StockManagement"));
 
@@ -40,12 +39,14 @@ public class AdminDashboardPanel extends JPanel {
         btnSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
 
         JButton btnSalesBilling = createButton("Sales & Billing");
+        btnSalesBilling.addActionListener(e -> mainFrame.switchPanel("Billing")); // ✅ FIXED
+
         JButton btnReports = createButton("Reports");
 
         JButton btnManageCustomers = createButton("Manage Customers");
         btnManageCustomers.addActionListener(e -> mainFrame.switchPanel("Customer"));
 
-        // ORDER UNCHANGED
+        // Add buttons in order
         buttonPanel.add(btnManageEmployees);
         buttonPanel.add(btnManageUsers);
         buttonPanel.add(btnStockManagement);

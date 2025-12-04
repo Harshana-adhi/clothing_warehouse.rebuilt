@@ -240,20 +240,20 @@ public class StockManagementPanel extends JPanel {
     private void loadStockData(){
         tableModel.setRowCount(0);
         try {
-            List<String[]> list = stockDAO.getAllStockDetails();
-            for(String[] row : list){
-                ClothingItem item = itemDAO.getItemById(row[0]);
+            List<Object[]> stockList = stockDAO.getAllStockForBilling(); // Updated DAO method
+            for(Object[] row : stockList){
+                ClothingItem item = itemDAO.getItemById((String)row[1]);
                 String costPrice = item != null ? item.getCostPrice().toString() : "-";
 
                 tableModel.addRow(new String[]{
-                        row[0],           // Item ID
-                        row[1],           // Color
-                        row[2],           // Material
-                        row[3],           // Category
-                        row[4],           // Size
-                        row[5],           // Quantity
-                        costPrice,        // Cost Price
-                        row[6]            // Retail Price
+                        row[1].toString(),     // ClothId / Item ID
+                        row[2] != null ? row[2].toString() : "-", // Color
+                        item != null ? item.getMaterial() : "-", // Material
+                        row[6] != null ? row[6].toString() : "-", // Category from DAO
+                        row[3] != null ? row[3].toString() : "-", // Size
+                        row[4] != null ? row[4].toString() : "0", // Quantity
+                        costPrice,                                 // Cost Price
+                        row[5] != null ? row[5].toString() : "-"  // Retail Price
                 });
             }
         } catch (Exception e) {
@@ -425,28 +425,26 @@ public class StockManagementPanel extends JPanel {
         }
 
         try {
-            List<ClothingItem> items = itemDAO.search(keyword);
-            for(ClothingItem item : items){
-                List<String[]> stockList = stockDAO.getStockByClothId(item.getClothId());
-                if(stockList.isEmpty()){
+            List<Object[]> stockList = stockDAO.getAllStockForBilling(); // Updated DAO method
+            for(Object[] row : stockList){
+                String clothId = row[1].toString();
+                String category = row[6] != null ? row[6].toString() : "-";
+                ClothingItem item = itemDAO.getItemById(clothId);
+                String material = item != null ? item.getMaterial() : "-";
+                String costPrice = item != null ? item.getCostPrice().toString() : "-";
+                String retailPrice = item != null ? item.getRetailPrice().toString() : "-";
+
+                if(clothId.contains(keyword) || category.toLowerCase().contains(keyword.toLowerCase())){
                     tableModel.addRow(new String[]{
-                            item.getClothId(), "-", item.getMaterial(), item.getCategory(),
-                            "-", "0",
-                            item.getCostPrice().toString(), item.getRetailPrice().toString()
+                            clothId,
+                            row[2] != null ? row[2].toString() : "-", // Color
+                            material,
+                            category,
+                            row[3] != null ? row[3].toString() : "-", // Size
+                            row[4] != null ? row[4].toString() : "0", // Quantity
+                            costPrice,
+                            retailPrice
                     });
-                } else {
-                    for(String[] stockRow : stockList){
-                        tableModel.addRow(new String[]{
-                                item.getClothId(),
-                                stockRow[0]==null?"-":stockRow[0],
-                                item.getMaterial(),
-                                item.getCategory(),
-                                stockRow[1]==null?"-":stockRow[1],
-                                stockRow[2]==null?"0":stockRow[2],
-                                item.getCostPrice().toString(),
-                                item.getRetailPrice().toString()
-                        });
-                    }
                 }
             }
         } catch(Exception e){

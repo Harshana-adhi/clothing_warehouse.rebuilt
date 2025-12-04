@@ -4,7 +4,6 @@ import Models.User;
 import javax.swing.*;
 import java.awt.*;
 
-
 public class MainFrame extends JFrame {
 
     private JPanel mainPanel;
@@ -59,9 +58,9 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-    // Add this import at the top
-
-
+    // ------------------------------------------------------
+    // Load dashboard based on role
+    // ------------------------------------------------------
     public void loadDashboardByRole(String role, User user) {
         loggedInUser = user; // store current user
         mainPanel.removeAll();
@@ -76,13 +75,15 @@ public class MainFrame extends JFrame {
                 EmployeePanel adminEmployeePanel = new EmployeePanel(loggedInUser);
                 CustomerPanel adminCustomerPanel = new CustomerPanel(loggedInUser);
                 SupplierPanel adminSupplierPanel = new SupplierPanel(loggedInUser);
-                StockManagementPanel adminStockPanel = new StockManagementPanel(loggedInUser); // NEW
+                StockManagementPanel adminStockPanel = new StockManagementPanel(loggedInUser);
+                SalesBillingPanel adminSalesBilling = new SalesBillingPanel(this, loggedInUser);
 
                 mainPanel.add(adminDashboard, "Dashboard");
                 mainPanel.add(adminEmployeePanel, "Employee");
                 mainPanel.add(adminCustomerPanel, "Customer");
                 mainPanel.add(adminSupplierPanel, "Supplier");
-                mainPanel.add(adminStockPanel, "StockManagement"); // NEW
+                mainPanel.add(adminStockPanel, "StockManagement");
+                mainPanel.add(adminSalesBilling, "Billing"); // <- fixed
 
                 statusLabel.setText("Welcome Admin!");
                 break;
@@ -95,13 +96,15 @@ public class MainFrame extends JFrame {
                 EmployeePanel managerEmployeePanel = new EmployeePanel(loggedInUser);
                 CustomerPanel managerCustomerPanel = new CustomerPanel(loggedInUser);
                 SupplierPanel managerSupplierPanel = new SupplierPanel(loggedInUser);
-                StockManagementPanel managerStockPanel = new StockManagementPanel(loggedInUser); // NEW
+                StockManagementPanel managerStockPanel = new StockManagementPanel(loggedInUser);
+                SalesBillingPanel managerSalesBilling = new SalesBillingPanel(this, loggedInUser);
 
                 mainPanel.add(managerDashboard, "Dashboard");
                 mainPanel.add(managerEmployeePanel, "Employee");
                 mainPanel.add(managerCustomerPanel, "Customer");
                 mainPanel.add(managerSupplierPanel, "Supplier");
-                mainPanel.add(managerStockPanel, "StockManagement"); // NEW
+                mainPanel.add(managerStockPanel, "StockManagement");
+                mainPanel.add(managerSalesBilling, "Billing"); // <- fixed
 
                 statusLabel.setText("Welcome Manager!");
                 break;
@@ -113,12 +116,14 @@ public class MainFrame extends JFrame {
                 StaffDashboardPanel staffDashboard = new StaffDashboardPanel(this);
                 CustomerPanel staffCustomerPanel = new CustomerPanel(loggedInUser);
                 SupplierPanel staffSupplierPanel = new SupplierPanel(loggedInUser);
-                StockManagementPanel staffStockPanel = new StockManagementPanel(loggedInUser); // NEW
+                StockManagementPanel staffStockPanel = new StockManagementPanel(loggedInUser);
+                SalesBillingPanel staffSalesBilling = new SalesBillingPanel(this, loggedInUser);
 
                 mainPanel.add(staffDashboard, "Dashboard");
                 mainPanel.add(staffCustomerPanel, "Customer");
                 mainPanel.add(staffSupplierPanel, "Supplier");
-                mainPanel.add(staffStockPanel, "StockManagement"); // NEW
+                mainPanel.add(staffStockPanel, "StockManagement");
+                mainPanel.add(staffSalesBilling, "Billing"); // <- fixed
 
                 statusLabel.setText("Welcome Staff!");
                 break;
@@ -134,7 +139,9 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-
+    // ------------------------------------------------------
+    // Switch panel by name
+    // ------------------------------------------------------
     public void switchPanel(String panelName) {
         cardLayout.show(mainPanel, panelName);
         statusLabel.setText("You are in " + panelName + " module");

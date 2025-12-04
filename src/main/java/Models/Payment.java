@@ -1,52 +1,51 @@
 package Models;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 public class Payment {
-    private int PaymentId;      // Auto-generated
-    private String PayType;
-    private double Amount;
-    private String PayDate;
-    private String EmployeeId;
-    private String CustomerId;
+    private int paymentId;
+    private String payType;
+    private BigDecimal amount;
+    private Date payDate;
+    private String employeeId;
+    private String customerId;
 
-    // Constructor without PaymentId (for insert)
-    public Payment(String PayType, double Amount, String PayDate, String EmployeeId, String CustomerId) {
-        this.PayType = PayType;
-        this.Amount = Amount;
-        this.PayDate = PayDate;
-        this.EmployeeId = EmployeeId;
-        this.CustomerId = CustomerId;
+    // Constructor for new payments (ID auto-generated)
+    public Payment(String payType, BigDecimal amount, Date payDate, String employeeId, String customerId) {
+        this.payType = payType;
+        this.amount = amount;
+        this.payDate = payDate;
+        this.employeeId = employeeId;
+        this.customerId = customerId;
     }
 
-    // Constructor with PaymentId (optional)
-    public Payment(int PaymentId, String PayType, double Amount, String PayDate, String EmployeeId, String CustomerId) {
-        this.PaymentId = PaymentId;
-        this.PayType = PayType;
-        this.Amount = Amount;
-        this.PayDate = PayDate;
-        this.EmployeeId = EmployeeId;
-        this.CustomerId = CustomerId;
+    // Full constructor with ID
+    public Payment(int paymentId, String payType, BigDecimal amount, Date payDate, String employeeId, String customerId) {
+        this.paymentId = paymentId;
+        this.payType = payType;
+        this.amount = amount;
+        this.payDate = payDate;
+        this.employeeId = employeeId;
+        this.customerId = customerId;
     }
 
-    // Setter for PaymentId (used after auto-generated insert)
-    public Payment withPaymentId(int PaymentId) {
-        this.PaymentId = PaymentId;
-        return this;
-    }
+    // Getters and Setters
+    public int getPaymentId() { return paymentId; }
+    public void setPaymentId(int paymentId) { this.paymentId = paymentId; }
 
-    // Getter for PaymentId
-    public int getPaymentId() {
-        return PaymentId;
-    }
+    public String getPayType() { return payType; }
+    public void setPayType(String payType) { this.payType = payType; }
 
-    // Optional: other getters if needed
-    public String getPayType() { return PayType; }
-    public double getAmount() { return Amount; }
-    public String getPayDate() { return PayDate; }
-    public String getEmployeeId() { return EmployeeId; }
-    public String getCustomerId() { return CustomerId; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
-    // Convert to array for DAO insert/update
-    public String[] toValuesArray() {
-        return new String[]{PayType, String.valueOf(Amount), PayDate, EmployeeId, CustomerId};
-    }
+    public Date getPayDate() { return payDate; }
+    public void setPayDate(Date payDate) { this.payDate = payDate; }
+
+    public String getEmployeeId() { return employeeId; }
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+
+    public String getCustomerId() { return customerId; }
+    public void setCustomerId(String customerId) { this.customerId = customerId; }
 }

@@ -2,123 +2,158 @@ package DAO;
 
 import DBConnection.DBConnect;
 import Models.Payment;
+import Models.User;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class PaymentDAO {
 
-    // 1. Insert new Payment
-    public boolean insert(Payment payment) {
-        String sql = "INSERT INTO Payment (PayType, Amount, PayDate, EmployeeId, CustomerId) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = DBConnect.getDBConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            String[] values = payment.toValuesArray();
-            pstmt.setString(1, values[0]);                  // PayType
-            pstmt.setDouble(2, Double.parseDouble(values[1])); // Amount
-            pstmt.setDate(3, Date.valueOf(values[2]));     // PayDate
-            pstmt.setString(4, values[3]);                 // EmployeeId
-            pstmt.setString(5, values[4]);                 // CustomerId
-
-            int rows = pstmt.executeUpdate();
-            return rows > 0;
-
-        } catch (SQLException e) {
-            System.out.println("Error inserting Payment: " + e.getMessage());
-            return false;
+    // Check permissions based on logged-in user role
+    private boolean hasPermission(User user, String operation){
+        if(user == null) return false;
+        String role = user.getRole().toLowerCase();
+        switch(operation.toLowerCase()){
+            case "add":
+            case "view":
+                return role.equals("admin") || role.equals("manager") || role.equals("staff");
+            case "update":
+            case "delete":
+                return role.equals("admin") || role.equals("manager");
+            default:
+                return false;
         }
     }
 
-    // 2. Update Payment by PaymentId
-    public boolean update(Payment payment, int paymentId) {
-        String sql = "UPDATE Payment SET PayType = ?, Amount = ?, PayDate = ?, EmployeeId = ?, CustomerId = ? WHERE PaymentId = ?";
-        try (Connection conn = DBConnect.getDBConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    // Insert a new payment
+    public boolean insert(Payment payment, User user){
+        if(!hasPermission(user, "add") || payment == null) return false;
 
-            String[] values = payment.toValuesArray();
-            pstmt.setString(1, values[0]);
-            pstmt.setDouble(2, Double.parseDouble(values[1]));
-            pstmt.setDate(3, Date.valueOf(values[2]));
-            pstmt.setString(4, values[3]);
-            pstmt.setString(5, values[4]);
-            pstmt.setInt(6, paymentId);
+        String sql = "INSERT INTO Payment (PayType, Amount, PayDate, EmployeeId, CustomerId) VALUES (?,?,?,?,?)";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
 
-            int rows = pstmt.executeUpdate();
-            return rows > 0;
+            ps.setString(1, payment.getPayType());
+            ps.setBigDecimal(2, payment.getAmount());
+            ps.setDate(3, new java.sql.Date(payment.getPayDate().getTime()));
+            ps.setString(4, payment.getEmployeeId());
+            ps.setString(5, payment.getCustomerId());
 
-        } catch (SQLException e) {
-            System.out.println("Error updating Payment: " + e.getMessage());
-            return false;
-        }
-    }
-
-    // 3. Delete Payment by PaymentId
-    public boolean delete(int paymentId) {
-        String sql = "DELETE FROM Payment WHERE PaymentId = ?";
-        try (Connection conn = DBConnect.getDBConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, paymentId);
-            int rows = pstmt.executeUpdate();
-            return rows > 0;
-
-        } catch (SQLException e) {
-            System.out.println("Error deleting Payment: " + e.getMessage());
-            return false;
-        }
-    }
-
-    // 4. Get Payment by PaymentId
-    public Payment getById(int paymentId) {
-        String sql = "SELECT * FROM Payment WHERE PaymentId = ?";
-        try (Connection conn = DBConnect.getDBConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, paymentId);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                return new Payment(
-                        rs.getString("PayType"),
-                        rs.getDouble("Amount"),
-                        rs.getDate("PayDate").toString(),
-                        rs.getString("EmployeeId"),
-                        rs.getString("CustomerId")
-                );
+            int affected = ps.executeUpdate();
+            if(affected > 0){
+                try(ResultSet rs = ps.getGeneratedKeys()){
+                    if(rs.next()){
+                        payment.setPaymentId(rs.getInt(1));
+                    }
+                }
+                return true;
             }
+        } catch(SQLException e){
+            System.out.println("Error inserting Payment: " + e.getMessage());
+        }
+        return false;
+    }
 
-        } catch (SQLException e) {
+    // Create payment and return generated PaymentId (using real logged-in user)
+    public Integer createPayment(String payType, BigDecimal amount, User user, String customerId){
+        if(user == null || !hasPermission(user, "add")) return null;
+
+        Payment payment = new Payment(payType, amount, new Date(), user.getEmployeeId(), customerId);
+        boolean success = insert(payment, user);
+        return success ? payment.getPaymentId() : null;
+    }
+
+    // Update payment (only admin/manager)
+    public boolean update(Payment payment, User user){
+        if(!hasPermission(user, "update") || payment == null) return false;
+
+        String sql = "UPDATE Payment SET PayType=?, Amount=?, PayDate=?, EmployeeId=?, CustomerId=? WHERE PaymentId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+
+            ps.setString(1, payment.getPayType());
+            ps.setBigDecimal(2, payment.getAmount());
+            ps.setDate(3, new java.sql.Date(payment.getPayDate().getTime()));
+            ps.setString(4, payment.getEmployeeId());
+            ps.setString(5, payment.getCustomerId());
+            ps.setInt(6, payment.getPaymentId());
+
+            return ps.executeUpdate() > 0;
+        } catch(SQLException e){
+            System.out.println("Error updating Payment: " + e.getMessage());
+        }
+        return false;
+    }
+
+    // Delete payment (only admin/manager)
+    public boolean delete(int paymentId, User user){
+        if(!hasPermission(user, "delete")) return false;
+
+        String sql = "DELETE FROM Payment WHERE PaymentId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, paymentId);
+            return ps.executeUpdate() > 0;
+        } catch(SQLException e){
+            System.out.println("Error deleting Payment: " + e.getMessage());
+        }
+        return false;
+    }
+
+    // Get payment by ID
+    public Payment getById(int paymentId, User user){
+        if(!hasPermission(user, "view")) return null;
+
+        String sql = "SELECT PaymentId, PayType, Amount, PayDate, EmployeeId, CustomerId FROM Payment WHERE PaymentId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+
+            ps.setInt(1, paymentId);
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()){
+                    return new Payment(
+                            rs.getInt("PaymentId"),
+                            rs.getString("PayType"),
+                            rs.getBigDecimal("Amount"),
+                            rs.getDate("PayDate"),
+                            rs.getString("EmployeeId"),
+                            rs.getString("CustomerId")
+                    );
+                }
+            }
+        } catch(SQLException e){
             System.out.println("Error fetching Payment: " + e.getMessage());
         }
         return null;
     }
 
-    // 5. Get all Payments
-    public List<Payment> getAll() {
+    // Get all payments
+    public List<Payment> getAll(User user){
         List<Payment> list = new ArrayList<>();
-        String sql = "SELECT * FROM Payment";
+        if(!hasPermission(user, "view")) return list;
 
-        try (Connection conn = DBConnect.getDBConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+        String sql = "SELECT PaymentId, PayType, Amount, PayDate, EmployeeId, CustomerId FROM Payment ORDER BY PayDate DESC";
+        try(Connection conn = DBConnect.getDBConnection();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql)){
 
-            while (rs.next()) {
-                Payment payment = new Payment(
+            while(rs.next()){
+                list.add(new Payment(
+                        rs.getInt("PaymentId"),
                         rs.getString("PayType"),
-                        rs.getDouble("Amount"),
-                        rs.getDate("PayDate").toString(),
+                        rs.getBigDecimal("Amount"),
+                        rs.getDate("PayDate"),
                         rs.getString("EmployeeId"),
                         rs.getString("CustomerId")
-                );
-                list.add(payment);
+                ));
             }
 
-        } catch (SQLException e) {
+        } catch(SQLException e){
             System.out.println("Error fetching all Payments: " + e.getMessage());
         }
-
         return list;
     }
 }

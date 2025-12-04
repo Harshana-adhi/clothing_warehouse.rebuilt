@@ -15,14 +15,13 @@ public class StaffDashboardPanel extends JPanel {
         title.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
         // Button Panel
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 15, 15));
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 2, 15, 15));
         buttonPanel.setBackground(new Color(245, 245, 245));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 100, 30, 100));
 
-        JButton btnBilling = createButton("Billing");
-        btnBilling.addActionListener(e -> mainFrame.switchPanel("Billing"));
+        JButton btnBilling = createButton("Sales & Billing");
+        btnBilling.addActionListener(e -> mainFrame.switchPanel("Billing")); // ✅ Fixed
 
-        // ⭐ SINGLE STOCK MANAGEMENT BUTTON
         JButton btnStockManagement = createButton("Stock Management");
         btnStockManagement.addActionListener(e -> mainFrame.switchPanel("StockManagement"));
 
@@ -32,7 +31,7 @@ public class StaffDashboardPanel extends JPanel {
         JButton btnViewSuppliers = createButton("View Suppliers");
         btnViewSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
 
-        // ADD buttons
+        // Add buttons
         buttonPanel.add(btnBilling);
         buttonPanel.add(btnStockManagement);
         buttonPanel.add(btnViewCustomers);
