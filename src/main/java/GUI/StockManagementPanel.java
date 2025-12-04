@@ -23,7 +23,9 @@ public class StockManagementPanel extends JPanel {
     private User currentUser;
 
     // Form Components
-    private JTextField txtClothId, txtMaterial, txtCategory, txtPrice, txtSupplierId, txtSearch;
+    private JTextField txtClothId, txtMaterial, txtCategory, txtCostPrice, txtRetailPrice, txtSearch;
+    private JComboBox<String> cmbSupplier;
+    private List<Supplier> supplierList; // store all suppliers for ID mapping
 
     // Buttons
     private JButton btnAddItem, btnUpdateItem, btnRestock, btnDeleteItem, btnClear, btnRefresh, btnSearch, btnViewSupplier;
@@ -98,13 +100,28 @@ public class StockManagementPanel extends JPanel {
         gbc.ipady = 10;
 
         txtClothId = createLabeledField(formPanel, gbc, "Item ID:", 0);
-        // Removed Color field
         txtMaterial = createLabeledField(formPanel, gbc, "Material:", 1);
         txtCategory = createLabeledField(formPanel, gbc, "Category:", 2);
-        txtPrice = createLabeledField(formPanel, gbc, "Price:", 3);
-        txtSupplierId = createLabeledField(formPanel, gbc, "Supplier ID:", 4);
+        txtCostPrice = createLabeledField(formPanel, gbc, "Cost Price:", 3);
+        txtRetailPrice = createLabeledField(formPanel, gbc, "Retail Price:", 4);
+
+        // Supplier ComboBox
+        cmbSupplier = new JComboBox<>();
+        loadSuppliers(); // populate combo box
+        JLabel lblSupplier = new JLabel("Supplier:");
+        lblSupplier.setFont(labelFont);
+        gbc.gridx = 0; gbc.gridy = 5; formPanel.add(lblSupplier, gbc);
+        gbc.gridx = 1; gbc.gridy = 5; formPanel.add(cmbSupplier, gbc);
 
         return formPanel;
+    }
+
+    private void loadSuppliers() {
+        supplierList = new SupplierDAO().getAllSuppliers();
+        cmbSupplier.removeAllItems();
+        for (Supplier s : supplierList) {
+            cmbSupplier.addItem(s.getSupplierId() + " - " + s.getSupName());
+        }
     }
 
     private JTextField createLabeledField(JPanel parent, GridBagConstraints gbc, String labelText, int y) {
@@ -127,7 +144,7 @@ public class StockManagementPanel extends JPanel {
         btnDeleteItem = createButton("Delete Item");
         btnClear = createButton("Clear");
         btnRefresh = createButton("Refresh");
-        btnViewSupplier = createButton("View Supplier");
+        btnViewSupplier = createButton("View Supplier Details");
 
         btnBack.addActionListener(e -> {
             Container topFrame = SwingUtilities.getWindowAncestor(this);
@@ -156,7 +173,8 @@ public class StockManagementPanel extends JPanel {
         btnSearch = createButton("Search");
         searchPanel.add(new JLabel("Search (ID/Category):")); searchPanel.add(txtSearch); searchPanel.add(btnSearch);
 
-        String[] columns = {"Item ID", "Color", "Material", "Category", "Size", "Quantity", "Price"};
+        // ------------------ UPDATED TABLE COLUMNS ------------------
+        String[] columns = {"Item ID", "Color", "Material", "Category", "Size", "Quantity", "Cost Price", "Retail Price"};
         tableModel = new DefaultTableModel(columns,0);
         stockTable = new JTable(tableModel);
         stockTable.setFont(inputFont);
@@ -224,7 +242,19 @@ public class StockManagementPanel extends JPanel {
         try {
             List<String[]> list = stockDAO.getAllStockDetails();
             for(String[] row : list){
-                tableModel.addRow(row);
+                ClothingItem item = itemDAO.getItemById(row[0]);
+                String costPrice = item != null ? item.getCostPrice().toString() : "-";
+
+                tableModel.addRow(new String[]{
+                        row[0],           // Item ID
+                        row[1],           // Color
+                        row[2],           // Material
+                        row[3],           // Category
+                        row[4],           // Size
+                        row[5],           // Quantity
+                        costPrice,        // Cost Price
+                        row[6]            // Retail Price
+                });
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error loading stock data: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
@@ -234,17 +264,23 @@ public class StockManagementPanel extends JPanel {
     private void handleTableClick(){
         int row = stockTable.getSelectedRow();
         if(row >= 0){
-            String clothId = tableModel.getValueAt(row,0).toString();
-            txtClothId.setText(clothId);
-            // Removed setting txtColor
+            txtClothId.setText(tableModel.getValueAt(row,0).toString());
             txtMaterial.setText(tableModel.getValueAt(row,2).toString());
             txtCategory.setText(tableModel.getValueAt(row,3).toString());
-            txtPrice.setText(tableModel.getValueAt(row,6).toString());
+            txtCostPrice.setText(tableModel.getValueAt(row,6).toString());
+            txtRetailPrice.setText(tableModel.getValueAt(row,7).toString());
 
-            try {
-                txtSupplierId.setText(itemDAO.getSupplierIdByClothId(clothId));
-            } catch(Exception e) {
-                txtSupplierId.setText("");
+            // Set supplier combo box
+            String supplierId = itemDAO.getSupplierIdByClothId(txtClothId.getText());
+            if(supplierId.isEmpty()){
+                cmbSupplier.setSelectedIndex(-1);
+            } else {
+                for (int i = 0; i < supplierList.size(); i++) {
+                    if (supplierList.get(i).getSupplierId().equals(supplierId)) {
+                        cmbSupplier.setSelectedIndex(i);
+                        break;
+                    }
+                }
             }
 
             txtClothId.setEditable(false);
@@ -257,17 +293,22 @@ public class StockManagementPanel extends JPanel {
         String id = txtClothId.getText().trim();
         String material = txtMaterial.getText().trim();
         String category = txtCategory.getText().trim();
-        String priceStr = txtPrice.getText().trim();
-        String supId = txtSupplierId.getText().trim();
+        String costStr = txtCostPrice.getText().trim();
+        String retailStr = txtRetailPrice.getText().trim();
 
-        if(id.isEmpty() || priceStr.isEmpty() || material.isEmpty()){
-            JOptionPane.showMessageDialog(this,"Item ID, Material, and Price are required!");
+        String supId = "";
+        int sel = cmbSupplier.getSelectedIndex();
+        if(sel >= 0) supId = supplierList.get(sel).getSupplierId();
+
+        if(id.isEmpty() || material.isEmpty() || costStr.isEmpty() || retailStr.isEmpty()){
+            JOptionPane.showMessageDialog(this,"Item ID, Material, Cost Price and Retail Price are required!");
             return;
         }
 
         try {
-            BigDecimal price = new BigDecimal(priceStr);
-            ClothingItem item = new ClothingItem(id, material, category, price, supId);
+            BigDecimal cost = new BigDecimal(costStr);
+            BigDecimal retail = new BigDecimal(retailStr);
+            ClothingItem item = new ClothingItem(id, material, category, cost, retail, supId);
 
             if(itemDAO.insert(item, currentUser)){
                 JOptionPane.showMessageDialog(this,"Item added successfully! Use Restock to add stock.");
@@ -277,7 +318,7 @@ public class StockManagementPanel extends JPanel {
                 JOptionPane.showMessageDialog(this,"Failed to add item. ID may exist or DB error.");
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Price must be a valid number.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Cost and Retail Price must be valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -287,10 +328,15 @@ public class StockManagementPanel extends JPanel {
         String id = txtClothId.getText().trim();
         if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select an item to update."); return; }
 
+        String supId = "";
+        int sel = cmbSupplier.getSelectedIndex();
+        if(sel >= 0) supId = supplierList.get(sel).getSupplierId();
+
         try {
-            BigDecimal price = new BigDecimal(txtPrice.getText().trim());
+            BigDecimal cost = new BigDecimal(txtCostPrice.getText().trim());
+            BigDecimal retail = new BigDecimal(txtRetailPrice.getText().trim());
             ClothingItem item = new ClothingItem(id, txtMaterial.getText().trim(),
-                    txtCategory.getText().trim(), price, txtSupplierId.getText().trim());
+                    txtCategory.getText().trim(), cost, retail, supId);
 
             if(itemDAO.update(item, currentUser)){
                 JOptionPane.showMessageDialog(this,"Item details updated!");
@@ -299,7 +345,7 @@ public class StockManagementPanel extends JPanel {
                 JOptionPane.showMessageDialog(this,"Failed to update item details.");
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Price must be valid.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Cost and Retail Price must be valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -365,7 +411,8 @@ public class StockManagementPanel extends JPanel {
 
     private void clearForm(){
         txtClothId.setText(""); txtMaterial.setText("");
-        txtCategory.setText(""); txtPrice.setText(""); txtSupplierId.setText("");
+        txtCategory.setText(""); txtCostPrice.setText(""); txtRetailPrice.setText("");
+        cmbSupplier.setSelectedIndex(-1);
         txtClothId.setEditable(true);
     }
 
@@ -382,16 +429,23 @@ public class StockManagementPanel extends JPanel {
             for(ClothingItem item : items){
                 List<String[]> stockList = stockDAO.getStockByClothId(item.getClothId());
                 if(stockList.isEmpty()){
-                    tableModel.addRow(new String[]{item.getClothId(), "-", item.getMaterial(), item.getCategory(), "-", "0", item.getPrice().toString()});
+                    tableModel.addRow(new String[]{
+                            item.getClothId(), "-", item.getMaterial(), item.getCategory(),
+                            "-", "0",
+                            item.getCostPrice().toString(), item.getRetailPrice().toString()
+                    });
                 } else {
                     for(String[] stockRow : stockList){
-                        tableModel.addRow(new String[]{item.getClothId(),
+                        tableModel.addRow(new String[]{
+                                item.getClothId(),
                                 stockRow[0]==null?"-":stockRow[0],
                                 item.getMaterial(),
                                 item.getCategory(),
-                                stockRow[1],
-                                stockRow[2],
-                                item.getPrice().toString()});
+                                stockRow[1]==null?"-":stockRow[1],
+                                stockRow[2]==null?"0":stockRow[2],
+                                item.getCostPrice().toString(),
+                                item.getRetailPrice().toString()
+                        });
                     }
                 }
             }
@@ -409,21 +463,16 @@ public class StockManagementPanel extends JPanel {
             return;
         }
 
-        String supplierId = txtSupplierId.getText().trim();
-        if(supplierId.isEmpty()){
-            JOptionPane.showMessageDialog(this,"No supplier assigned for this item.","Error",JOptionPane.ERROR_MESSAGE);
+        int sel = cmbSupplier.getSelectedIndex();
+        if(sel < 0){
+            JOptionPane.showMessageDialog(this,"No supplier assigned to this item.");
             return;
         }
 
-        SupplierDAO supplierDAO = new SupplierDAO();
-        supplierDAO.getSupplierById(supplierId).ifPresentOrElse(
-                supplier -> {
-                    String message = "Supplier ID: "+supplier.getSupplierId()+"\n"+
-                            "Name: "+supplier.getSupName()+"\n"+
-                            "Contact: "+supplier.getTellNo();
-                    JOptionPane.showMessageDialog(this, message, "Supplier Details", JOptionPane.INFORMATION_MESSAGE);
-                },
-                () -> JOptionPane.showMessageDialog(this,"Supplier not found.","Error",JOptionPane.ERROR_MESSAGE)
-        );
+        Supplier supplier = supplierList.get(sel);
+        String message = "Supplier ID: "+supplier.getSupplierId()+"\n"+
+                "Name: "+supplier.getSupName()+"\n"+
+                "Contact: "+supplier.getTellNo();
+        JOptionPane.showMessageDialog(this, message, "Supplier Details", JOptionPane.INFORMATION_MESSAGE);
     }
 }

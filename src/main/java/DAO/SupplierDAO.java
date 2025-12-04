@@ -22,7 +22,7 @@ public class SupplierDAO {
                 return role.equals("admin") || role.equals("manager");
             case "view":
             case "search":
-                return true; // All roles can view/search
+                return true;
             default:
                 return false;
         }
@@ -96,6 +96,11 @@ public class SupplierDAO {
         return list;
     }
 
+    // ✅ ✅ ✅ NEW METHOD FOR COMBOBOX (SAFE WRAPPER)
+    public List<Supplier> getAllSuppliers() {
+        return getAll();   // Uses your existing logic
+    }
+
     public List<Supplier> searchByIdOrName(String keyword) {
         List<Supplier> list = new ArrayList<>();
         String sql = "SELECT * FROM Supplier WHERE SupplierId LIKE ? OR SupName LIKE ?";
@@ -131,7 +136,6 @@ public class SupplierDAO {
         return false;
     }
 
-    // ------------------- NEW METHOD -------------------
     public Optional<Supplier> getSupplierById(String supplierId) {
         String sql = "SELECT * FROM Supplier WHERE SupplierId = ?";
         try (Connection conn = DBConnect.getDBConnection();

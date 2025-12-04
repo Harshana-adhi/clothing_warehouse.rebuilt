@@ -64,8 +64,9 @@ public class ClothingStockDAO {
     // Get stock details for display (all items). Join now uses ClothingStock.color (stock level color).
     public List<String[]> getAllStockDetails() throws SQLException {
         List<String[]> list = new ArrayList<>();
-        String sql = "SELECT cs.ClothId, cs.Color, ci.Material, ci.category, cs.Size, cs.Quantity, ci.Price " +
-                "FROM ClothingStock cs INNER JOIN ClothingItem ci ON cs.ClothId = ci.ClothId " +
+        String sql = "SELECT cs.ClothId, cs.Color, ci.Material, ci.category, cs.Size, cs.Quantity, ci.RetailPrice " +
+                "FROM ClothingStock cs " +
+                "INNER JOIN ClothingItem ci ON cs.ClothId = ci.ClothId " +
                 "ORDER BY cs.ClothId, cs.Color, cs.Size";
         try (Connection conn = DBConnect.getDBConnection();
              Statement stmt = conn.createStatement();
@@ -73,17 +74,18 @@ public class ClothingStockDAO {
             while (rs.next()) {
                 list.add(new String[]{
                         rs.getString("ClothId"),
-                        rs.getString("Color"),
+                        rs.getString("Color") != null ? rs.getString("Color") : "-",
                         rs.getString("Material"),
                         rs.getString("category"),
-                        rs.getString("Size"),
+                        rs.getString("Size") != null ? rs.getString("Size") : "-",
                         String.valueOf(rs.getInt("Quantity")),
-                        rs.getBigDecimal("Price").toString()
+                        rs.getBigDecimal("RetailPrice").toString()
                 });
             }
         }
         return list;
     }
+
 
     // Return stock rows for a given clothId: each row => [Color, Size, Quantity]
     public List<String[]> getStockByClothId(String clothId) throws SQLException {

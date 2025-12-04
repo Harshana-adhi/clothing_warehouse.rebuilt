@@ -4,18 +4,19 @@ import java.math.BigDecimal;
 
 public class ClothingItem {
     private String clothId;
-    // REMOVED: private String color;
     private String material;
     private String category;
-    private BigDecimal price;
+    private BigDecimal costPrice;    // New field
+    private BigDecimal retailPrice;  // New field
     private String supplierId;
 
-    // Constructor without color
-    public ClothingItem(String clothId, String material, String category, BigDecimal price, String supplierId) {
+    // Constructor
+    public ClothingItem(String clothId, String material, String category, BigDecimal costPrice, BigDecimal retailPrice, String supplierId) {
         this.clothId = clothId;
         this.material = material;
         this.category = category;
-        this.price = price;
+        this.costPrice = costPrice;
+        this.retailPrice = retailPrice;
         this.supplierId = supplierId;
     }
 
@@ -31,14 +32,18 @@ public class ClothingItem {
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public BigDecimal getCostPrice() { return costPrice; }
+    public void setCostPrice(BigDecimal costPrice) { this.costPrice = costPrice; }
+
+    public BigDecimal getRetailPrice() { return retailPrice; }
+    public void setRetailPrice(BigDecimal retailPrice) { this.retailPrice = retailPrice; }
 
     public String getSupplierId() { return supplierId; }
     public void setSupplierId(String supplierId) { this.supplierId = supplierId; }
 
     // Utility method for JTable conversion
     public String[] toValuesArray() {
-        return new String[]{clothId, material, category, price.toString(), supplierId};
+        return new String[]{clothId, material, category,
+                costPrice.toString(), retailPrice.toString(), supplierId};
     }
 }
