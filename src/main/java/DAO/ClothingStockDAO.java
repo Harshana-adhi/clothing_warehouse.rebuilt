@@ -23,6 +23,29 @@ public class ClothingStockDAO {
         }
     }
 
+    // ================== STOCK UPDATE METHODS (NEW) ==================
+
+    public int getAvailableQuantity(Connection conn, int stockId) throws SQLException {
+        String sql = "SELECT Quantity FROM ClothingStock WHERE StockId=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, stockId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("Quantity");
+        }
+        return 0;
+    }
+
+    public boolean reduceStockQuantity(Connection conn, int stockId, int qty) throws SQLException {
+        String sql = "UPDATE ClothingStock SET Quantity = Quantity - ? WHERE StockId=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, qty);
+            ps.setInt(2, stockId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    // ================== EXISTING CODE (UNCHANGED) ==================
+
     public boolean restockItem(ClothingStock stock, User user) {
         if (!hasPermission(user, "restock") || stock == null || stock.getClothId() == null || stock.getClothId().isEmpty())
             return false;
@@ -61,14 +84,10 @@ public class ClothingStockDAO {
         }
     }
 
-    // ================== BILLING METHODS ==================
-
-    // For combo box: include category
     public List<Object[]> getAllStockForBilling() {
         List<Object[]> list = new ArrayList<>();
         String sql = "SELECT cs.StockId, cs.ClothId, cs.Color, cs.Size, cs.Quantity, ci.RetailPrice, ci.Category " +
-                "FROM ClothingStock cs " +
-                "JOIN ClothingItem ci ON cs.ClothId = ci.ClothId";
+                "FROM ClothingStock cs JOIN ClothingItem ci ON cs.ClothId = ci.ClothId";
 
         try (Connection conn = DBConnect.getDBConnection();
              Statement st = conn.createStatement();
@@ -82,7 +101,7 @@ public class ClothingStockDAO {
                         rs.getString("Size"),
                         rs.getInt("Quantity"),
                         rs.getBigDecimal("RetailPrice"),
-                        rs.getString("Category") // ✅ Added
+                        rs.getString("Category")
                 });
             }
         } catch (SQLException e) {
@@ -91,12 +110,9 @@ public class ClothingStockDAO {
         return list;
     }
 
-    // For bill details: include category
     public Object[] getStockInfoByStockId(int stockId) {
         String sql = "SELECT cs.ClothId, cs.Color, cs.Size, ci.RetailPrice, ci.Category " +
-                "FROM ClothingStock cs " +
-                "JOIN ClothingItem ci ON cs.ClothId = ci.ClothId " +
-                "WHERE cs.StockId=?";
+                "FROM ClothingStock cs JOIN ClothingItem ci ON cs.ClothId = ci.ClothId WHERE cs.StockId=?";
 
         try (Connection conn = DBConnect.getDBConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -109,7 +125,7 @@ public class ClothingStockDAO {
                         rs.getString("Color"),
                         rs.getString("Size"),
                         rs.getBigDecimal("RetailPrice"),
-                        rs.getString("Category") // ✅ Added
+                        rs.getString("Category")
                 };
             }
         } catch (SQLException e) {

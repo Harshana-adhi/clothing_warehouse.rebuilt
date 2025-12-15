@@ -36,6 +36,26 @@ public class BillingDAO {
             conn = DBConnect.getDBConnection();
             conn.setAutoCommit(false);
 
+            // ==================== CHECK STOCK ====================
+            for(BillDetails bd : items){
+                if(bd.getStockId() != null){
+                    String stockCheckSql = "SELECT Quantity FROM ClothingStock WHERE StockId=?";
+                    try (PreparedStatement psCheck = conn.prepareStatement(stockCheckSql)) {
+                        psCheck.setInt(1, bd.getStockId());
+                        ResultSet rs = psCheck.executeQuery();
+                        if(rs.next()){
+                            int availableQty = rs.getInt("Quantity");
+                            if(bd.getQuantity() > availableQty){
+                                throw new RuntimeException("Insufficient stock for Stock ID: " + bd.getStockId() +
+                                        " (requested: " + bd.getQuantity() + ", available: " + availableQty + ")");
+                            }
+                        } else {
+                            throw new RuntimeException("Stock ID not found: " + bd.getStockId());
+                        }
+                    }
+                }
+            }
+
             PaymentDAO paymentDAO = new PaymentDAO();
             BigDecimal totalAmount = items.stream()
                     .map(BillDetails::getTotalAmount)
@@ -88,6 +108,19 @@ public class BillingDAO {
                     psDetail.addBatch();
                 }
                 psDetail.executeBatch();
+            }
+
+            // ==================== UPDATE STOCK ====================
+            String updateStockSql = "UPDATE ClothingStock SET Quantity = Quantity - ? WHERE StockId=?";
+            try (PreparedStatement psUpdate = conn.prepareStatement(updateStockSql)) {
+                for(BillDetails bd : items){
+                    if(bd.getStockId() != null){
+                        psUpdate.setInt(1, bd.getQuantity());
+                        psUpdate.setInt(2, bd.getStockId());
+                        psUpdate.addBatch();
+                    }
+                }
+                psUpdate.executeBatch();
             }
 
             conn.commit();

@@ -7,6 +7,8 @@ import Models.User;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -28,44 +30,84 @@ public class EmployeePanel extends JPanel {
     private final Color backButtonhover = new Color(200, 100, 136);
     private final Color buttonHover = new Color(0, 137, 123);
     private final Color tableSelection = new Color(200, 230, 201);
+    private final Color tableHeaderBackground = new Color(50, 50, 50);
+    private final Color tableHeaderForeground = Color.WHITE;
     private final Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
     private final Font inputFont = new Font("Segoe UI", Font.PLAIN, 16);
+    private final Font headerFont = new Font("Segoe UI", Font.BOLD, 16);
+    private final Font buttonFontLarge = new Font("Segoe UI", Font.BOLD, 16); // Slightly larger font for buttons
 
     public EmployeePanel(User user) {
         this.currentUser = user;
 
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(15, 15));
         setBackground(panelBackground);
-        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setBorder(new EmptyBorder(20, 20, 20, 20));
 
         // --- Left Panel: Form + Buttons ---
-        JPanel leftPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel leftPanel = new JPanel(new BorderLayout(15, 15));
         leftPanel.setBackground(panelBackground);
 
+        // FORM PANEL STYLING
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(formBackground);
-        formPanel.setBorder(BorderFactory.createTitledBorder("Employee Details"));
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createEmptyBorder(10, 10, 10, 10),
+                        "Employee Details",
+                        javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                        javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                        labelFont.deriveFont(Font.BOLD, 16),
+                        buttonColor
+                )
+        ));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(12, 12, 12, 12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.ipady = 10;
 
         JLabel lblId = new JLabel("Employee ID:"); lblId.setFont(labelFont);
-        txtId = new JTextField(); txtId.setFont(inputFont);
+        txtId = new JTextField();
+        txtId.setFont(inputFont);
+        txtId.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
 
         JLabel lblName = new JLabel("Name:"); lblName.setFont(labelFont);
-        txtName = new JTextField(); txtName.setFont(inputFont);
+        txtName = new JTextField();
+        txtName.setFont(inputFont);
+        txtName.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
 
         JLabel lblPhone = new JLabel("Phone:"); lblPhone.setFont(labelFont);
-        txtPhone = new JTextField(); txtPhone.setFont(inputFont);
+        txtPhone = new JTextField();
+        txtPhone.setFont(inputFont);
+        txtPhone.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
 
         JLabel lblSalary = new JLabel("Salary:"); lblSalary.setFont(labelFont);
-        txtSalary = new JTextField(); txtSalary.setFont(inputFont);
+        txtSalary = new JTextField();
+        txtSalary.setFont(inputFont);
+        txtSalary.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
 
         JLabel lblPosition = new JLabel("Position:"); lblPosition.setFont(labelFont);
-        txtPosition = new JTextField(); txtPosition.setFont(inputFont);
+        txtPosition = new JTextField();
+        txtPosition.setFont(inputFont);
+        txtPosition.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
 
         gbc.gridx = 0; gbc.gridy = 0; formPanel.add(lblId, gbc);
         gbc.gridx = 1; gbc.gridy = 0; formPanel.add(txtId, gbc);
@@ -78,15 +120,19 @@ public class EmployeePanel extends JPanel {
         gbc.gridx = 0; gbc.gridy = 4; formPanel.add(lblPosition, gbc);
         gbc.gridx = 1; gbc.gridy = 4; formPanel.add(txtPosition, gbc);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 15, 15));
+        // BUTTON PANEL STYLING
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 20, 20));
         buttonPanel.setBackground(formBackground);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
 
         // --- Back Button ---
         JButton btnBack = new JButton("Back");
         btnBack.setBackground(backButtonColor);
         btnBack.setForeground(Color.WHITE);
-        btnBack.setFont(labelFont);
+        btnBack.setFont(buttonFontLarge); // Use larger font
+        btnBack.setPreferredSize(new Dimension(100, 45)); // Set preferred size for larger button
         btnBack.setFocusPainted(false);
+        btnBack.setBorder(BorderFactory.createLineBorder(backButtonColor, 2));
         btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnBack.addMouseListener(new MouseAdapter() {
             @Override
@@ -114,25 +160,69 @@ public class EmployeePanel extends JPanel {
         buttonPanel.add(btnDelete); buttonPanel.add(btnClear);
         buttonPanel.add(btnRefresh);
 
+        // Add form and buttons to left panel
         leftPanel.add(formPanel, BorderLayout.CENTER);
         leftPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         // --- Right Panel: Search + Table ---
-        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel rightPanel = new JPanel(new BorderLayout(15, 15));
         rightPanel.setBackground(panelBackground);
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // SEARCH PANEL STYLING
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         searchPanel.setBackground(panelBackground);
-        txtSearch = new JTextField(25); txtSearch.setFont(inputFont);
+        txtSearch = new JTextField(25);
+        txtSearch.setFont(inputFont);
+        txtSearch.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
         btnSearch = createButton("Search");
-        searchPanel.add(new JLabel("Search:")); searchPanel.add(txtSearch); searchPanel.add(btnSearch);
+        JLabel lblSearch = new JLabel("Search:"); lblSearch.setFont(labelFont);
+        searchPanel.add(lblSearch); searchPanel.add(txtSearch); searchPanel.add(btnSearch);
 
-        tableModel = new DefaultTableModel(new String[]{"Employee ID", "Name", "Phone", "Salary", "Position"}, 0);
+        // TABLE STYLING
+        tableModel = new DefaultTableModel(new String[]{"Employee ID", "Name", "Phone", "Salary", "Position"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // All cells are set to be uneditable (view-only)
+                return false;
+            }
+        };
         employeeTable = new JTable(tableModel);
         employeeTable.setFont(inputFont);
         employeeTable.setRowHeight(35);
         employeeTable.setSelectionBackground(tableSelection);
+        employeeTable.setGridColor(new Color(230, 230, 230));
+        employeeTable.setShowVerticalLines(false);
+
+        // Table Header Styling
+        JTableHeader header = employeeTable.getTableHeader();
+        header.setFont(headerFont);
+        header.setBackground(tableHeaderBackground);
+        header.setForeground(tableHeaderForeground);
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+
+        // Center align header text
+        ((DefaultTableCellRenderer)header.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Table Cell Renderer for alternating row colors
+        employeeTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? new Color(250, 250, 250) : formBackground);
+                }
+                return c;
+            }
+        });
+
+
         JScrollPane tableScroll = new JScrollPane(employeeTable);
+        tableScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
 
         rightPanel.add(searchPanel, BorderLayout.NORTH);
         rightPanel.add(tableScroll, BorderLayout.CENTER);
@@ -197,7 +287,10 @@ public class EmployeePanel extends JPanel {
     private JButton createButton(String text) {
         JButton btn = new JButton(text);
         btn.setBackground(buttonColor); btn.setForeground(Color.WHITE);
-        btn.setFont(labelFont); btn.setFocusPainted(false);
+        btn.setFont(buttonFontLarge); // Use larger font
+        btn.setPreferredSize(new Dimension(100, 45)); // Set preferred size for larger button
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createLineBorder(buttonColor, 2));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) { btn.setBackground(buttonHover); }

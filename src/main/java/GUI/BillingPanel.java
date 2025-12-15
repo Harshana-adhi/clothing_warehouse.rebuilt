@@ -6,6 +6,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.border.Border; // CORRECTED: Import Border Interface
 import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -154,12 +156,22 @@ public class BillingPanel extends JPanel {
 
         // Tables
         tableModel = new DefaultTableModel(
-                new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Unit Price", "Total"}, 0);
+                new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Unit Price", "Total"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make tblItems read-only
+            }
+        };
         tblItems = new JTable(tableModel);
         JScrollPane currentBillScroll = new JScrollPane(tblItems);
 
         billTableModel = new DefaultTableModel(
-                new String[]{"Bill ID", "Customer", "Date", "Amount", "Description"}, 0);
+                new String[]{"Bill ID", "Customer", "Date", "Amount", "Description"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make tblBills read-only
+            }
+        };
         tblBills = new JTable(billTableModel);
         JScrollPane pastBillScroll = new JScrollPane(tblBills);
 
@@ -170,9 +182,48 @@ public class BillingPanel extends JPanel {
         billItemsLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
         billDetailsTableModel = new DefaultTableModel(
-                new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Unit Price", "Total"}, 0);
+                new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Unit Price", "Total"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make tblBillDetails read-only
+            }
+        };
         tblBillDetails = new JTable(billDetailsTableModel);
         JScrollPane billDetailsScroll = new JScrollPane(tblBillDetails);
+
+        // ================== MODIFICATION START: TABLE STYLING/PADDING ==================
+
+        // Define a custom renderer for padding
+        DefaultTableCellRenderer paddingRenderer = new DefaultTableCellRenderer() {
+            // Note: Border is now correctly imported.
+            private final Border cellPadding = BorderFactory.createEmptyBorder(5, 5, 5, 5); // 5px padding
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                                                           boolean isSelected, boolean hasFocus,
+                                                           int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setBorder(cellPadding);
+                return this;
+            }
+        };
+
+        // Apply the renderer to all tables
+        applyCustomRenderer(tblItems, paddingRenderer);
+        applyCustomRenderer(tblBills, paddingRenderer);
+        applyCustomRenderer(tblBillDetails, paddingRenderer);
+
+        // Increase table row height slightly for better visual effect with padding
+        tblItems.setRowHeight(tblItems.getRowHeight() + 8);
+        tblBills.setRowHeight(tblBills.getRowHeight() + 8);
+        tblBillDetails.setRowHeight(tblBillDetails.getRowHeight() + 8);
+
+        // Optional: Style header for better consistency
+        tblItems.getTableHeader().setFont(tblItems.getTableHeader().getFont().deriveFont(Font.BOLD));
+        tblBills.getTableHeader().setFont(tblBills.getTableHeader().getFont().deriveFont(Font.BOLD));
+        tblBillDetails.getTableHeader().setFont(tblBillDetails.getTableHeader().getFont().deriveFont(Font.BOLD));
+
+        // ================== MODIFICATION END ==================
+
 
         JPanel detailsContainer = new JPanel(new BorderLayout());
         detailsContainer.add(billItemsLabel, BorderLayout.NORTH);
@@ -193,7 +244,7 @@ public class BillingPanel extends JPanel {
         mainVerticalSplit.setOneTouchExpandable(true);
 
         JPanel rightPanelWrapper = new JPanel(new BorderLayout());
-        rightPanelWrapper.setBorder(new TitledBorder("Transaction History & Current Bill"));
+        rightPanelWrapper.setBorder(new TitledBorder(" Current Bill"));
         rightPanelWrapper.add(mainVerticalSplit, BorderLayout.CENTER);
 
         JSplitPane mainHorizontalSplit = new JSplitPane(
@@ -206,7 +257,7 @@ public class BillingPanel extends JPanel {
         // ================== EVENT LISTENERS ==================
         btnAddItem.addActionListener(e -> addItem());
         btnClearItems.addActionListener(e -> clearCurrentBillItems());
-        btnSaveBill.addActionListener(e -> saveBill());
+        btnSaveBill.addActionListener(e -> saveBillWithQuantityCheck());
         btnRefreshItems.addActionListener(e -> loadItems());
 
         btnBack.addActionListener(e -> {
@@ -223,6 +274,32 @@ public class BillingPanel extends JPanel {
         refreshBillTable();
     }
 
+    // ================== NEW HELPER METHOD FOR STYLING ==================
+    private void applyCustomRenderer(JTable table, DefaultTableCellRenderer renderer) {
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(renderer);
+        }
+    }
+
+    // ================== NEW SAVE BILL WITH QUANTITY CHECK ==================
+    private void saveBillWithQuantityCheck() {
+        // Check if any bill item exceeds stock quantity
+        for (BillDetails bd : billItems) {
+            Object[] stockInfo = stockDAO.getStockInfoByStockId(bd.getStockId());
+            if(stockInfo != null && stockInfo.length > 5){
+                int availableQty = ((Integer) stockInfo[5]);
+                if(bd.getQuantity() > availableQty){
+                    JOptionPane.showMessageDialog(this,
+                            "Quantity for Stock ID " + bd.getStockId() + " exceeds available stock (" + availableQty + ").",
+                            "Stock Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+        }
+        // If all quantities valid, proceed to save
+        saveBill();
+    }
+
     private void styleGreenButton(JButton btn){
         btn.setBackground(new Color(0, 150, 136));
         btn.setForeground(Color.WHITE);
@@ -235,6 +312,7 @@ public class BillingPanel extends JPanel {
         btn.setFocusPainted(false);
     }
 
+    // ================== EXISTING METHODS (NO CHANGES) ==================
     private void loadItems() {
         stockList = stockDAO.getAllStockForBilling();
         cmbItem.removeAllItems();
@@ -242,7 +320,7 @@ public class BillingPanel extends JPanel {
             Object categoryObj = s.length > 6 ? s[6] : "-";
             String category = categoryObj != null ? categoryObj.toString() : "-";
 
-            cmbItem.addItem("Stock#" + s[0] + " | " + s[1] + " | " + category +
+            cmbItem.addItem("Stock " + s[0] + " | " + s[1] + " | " + category +
                     " | " + s[2] + " | Size: " + s[3] + " | Rs." + s[5]);
         }
     }
@@ -266,6 +344,7 @@ public class BillingPanel extends JPanel {
         String color = (String) stock[2];
         String size = (String) stock[3];
         BigDecimal price = (BigDecimal) stock[5];
+        int availableQty = (int) stock[4]; // Quantity from stock list
 
         int qty;
         try {
@@ -274,6 +353,14 @@ public class BillingPanel extends JPanel {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Invalid quantity");
             return;
+        }
+
+        // ===================== CHECK QUANTITY AGAINST STOCK =====================
+        if (qty > availableQty) {
+            JOptionPane.showMessageDialog(this,
+                    "Selected quantity not available | Available quantity: " + availableQty,
+                    "Stock Warning", JOptionPane.WARNING_MESSAGE);
+            return; // Do NOT add the item to the bill
         }
 
         BigDecimal total = price.multiply(BigDecimal.valueOf(qty));
@@ -288,6 +375,7 @@ public class BillingPanel extends JPanel {
 
         txtQuantity.setText("");
     }
+
 
     private void clearCurrentBillItems() {
         if (tableModel.getRowCount() == 0) {

@@ -7,6 +7,8 @@ import Models.User;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -21,6 +23,7 @@ public class CustomerPanel extends JPanel {
     private JTable customerTable;
     private DefaultTableModel tableModel;
 
+    // --- STYLING CONSTANTS (Copied from EmployeePanel) ---
     private final Color panelBackground = new Color(245, 245, 245);
     private final Color formBackground = Color.WHITE;
     private final Color buttonColor = new Color(0, 150, 136);
@@ -28,41 +31,65 @@ public class CustomerPanel extends JPanel {
     private final Color backButtonhover = new Color(200, 100, 136);
     private final Color buttonHover = new Color(0, 137, 123);
     private final Color tableSelection = new Color(200, 230, 201);
+    private final Color tableHeaderBackground = new Color(50, 50, 50);
+    private final Color tableHeaderForeground = Color.WHITE;
     private final Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
     private final Font inputFont = new Font("Segoe UI", Font.PLAIN, 16);
+    private final Font headerFont = new Font("Segoe UI", Font.BOLD, 16);
+    private final Font buttonFontLarge = new Font("Segoe UI", Font.BOLD, 16); // Larger font for buttons
 
     public CustomerPanel(User user) {
         this.currentUser = user;
 
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(15, 15)); // Increased spacing
         setBackground(panelBackground);
-        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setBorder(new EmptyBorder(20, 20, 20, 20)); // Increased padding
 
         // --- Left Panel: Form + Buttons ---
-        JPanel leftPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel leftPanel = new JPanel(new BorderLayout(15, 15)); // Increased spacing
         leftPanel.setBackground(panelBackground);
 
+        // FORM PANEL STYLING
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(formBackground);
-        formPanel.setBorder(BorderFactory.createTitledBorder("Customer Details"));
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 220, 220), 1), // Light border
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createEmptyBorder(10, 10, 10, 10),
+                        "Customer Details",
+                        javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                        javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                        labelFont.deriveFont(Font.BOLD, 16),
+                        buttonColor
+                )
+        ));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(12, 12, 12, 12); // Increased inner padding
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.ipady = 10;
 
+        // Input Field Stylings
         JLabel lblId = new JLabel("Customer ID:"); lblId.setFont(labelFont);
-        txtId = new JTextField(); txtId.setFont(inputFont);
+        txtId = new JTextField();
+        txtId.setFont(inputFont);
+        txtId.setBorder(createInputBorder());
 
         JLabel lblName = new JLabel("Name:"); lblName.setFont(labelFont);
-        txtName = new JTextField(); txtName.setFont(inputFont);
+        txtName = new JTextField();
+        txtName.setFont(inputFont);
+        txtName.setBorder(createInputBorder());
 
         JLabel lblAddress = new JLabel("Address:"); lblAddress.setFont(labelFont);
-        txtAddress = new JTextField(); txtAddress.setFont(inputFont);
+        txtAddress = new JTextField();
+        txtAddress.setFont(inputFont);
+        txtAddress.setBorder(createInputBorder());
 
         JLabel lblPhone = new JLabel("Phone:"); lblPhone.setFont(labelFont);
-        txtPhone = new JTextField(); txtPhone.setFont(inputFont);
+        txtPhone = new JTextField();
+        txtPhone.setFont(inputFont);
+        txtPhone.setBorder(createInputBorder());
 
         gbc.gridx = 0; gbc.gridy = 0; formPanel.add(lblId, gbc);
         gbc.gridx = 1; gbc.gridy = 0; formPanel.add(txtId, gbc);
@@ -73,15 +100,19 @@ public class CustomerPanel extends JPanel {
         gbc.gridx = 0; gbc.gridy = 3; formPanel.add(lblPhone, gbc);
         gbc.gridx = 1; gbc.gridy = 3; formPanel.add(txtPhone, gbc);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 15, 15));
+        // BUTTON PANEL STYLING
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 20, 20)); // Increased gaps
         buttonPanel.setBackground(formBackground);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0)); // Top margin
 
         // --- Back Button ---
         JButton btnBack = new JButton("Back");
         btnBack.setBackground(backButtonColor);
         btnBack.setForeground(Color.WHITE);
-        btnBack.setFont(labelFont);
+        btnBack.setFont(buttonFontLarge); // Use larger font
+        btnBack.setPreferredSize(new Dimension(100, 45)); // Set preferred size
         btnBack.setFocusPainted(false);
+        btnBack.setBorder(BorderFactory.createLineBorder(backButtonColor, 2));
         btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnBack.addMouseListener(new MouseAdapter() {
             @Override
@@ -111,21 +142,60 @@ public class CustomerPanel extends JPanel {
         leftPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         // --- Right Panel: Search + Table ---
-        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel rightPanel = new JPanel(new BorderLayout(15, 15)); // Increased spacing
         rightPanel.setBackground(panelBackground);
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // SEARCH PANEL STYLING
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10)); // Increased gaps
         searchPanel.setBackground(panelBackground);
-        txtSearch = new JTextField(25); txtSearch.setFont(inputFont);
+        txtSearch = new JTextField(25);
+        txtSearch.setFont(inputFont);
+        txtSearch.setBorder(createInputBorder());
         btnSearch = createButton("Search");
-        searchPanel.add(new JLabel("Search:")); searchPanel.add(txtSearch); searchPanel.add(btnSearch);
+        JLabel lblSearch = new JLabel("Search:"); lblSearch.setFont(labelFont);
+        searchPanel.add(lblSearch); searchPanel.add(txtSearch); searchPanel.add(btnSearch);
 
-        tableModel = new DefaultTableModel(new String[]{"Customer ID", "Name", "Address", "Phone"}, 0);
+        // TABLE STYLING
+        tableModel = new DefaultTableModel(new String[]{"Customer ID", "Name", "Address", "Phone"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // All cells are set to be uneditable (view-only)
+                return false;
+            }
+        };
         customerTable = new JTable(tableModel);
         customerTable.setFont(inputFont);
         customerTable.setRowHeight(35);
         customerTable.setSelectionBackground(tableSelection);
+        customerTable.setGridColor(new Color(230, 230, 230)); // Lighter grid lines
+        customerTable.setShowVerticalLines(false); // Hide vertical lines
+
+        // Table Header Styling
+        JTableHeader header = customerTable.getTableHeader();
+        header.setFont(headerFont);
+        header.setBackground(tableHeaderBackground);
+        header.setForeground(tableHeaderForeground);
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+
+        // Center align header text
+        ((DefaultTableCellRenderer)header.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Table Cell Renderer for alternating row colors
+        customerTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Add padding to cells
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? new Color(250, 250, 250) : formBackground); // Subtle alternating row colors
+                }
+                return c;
+            }
+        });
+
         JScrollPane tableScroll = new JScrollPane(customerTable);
+        tableScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200))); // Border around table
 
         rightPanel.add(searchPanel, BorderLayout.NORTH);
         rightPanel.add(tableScroll, BorderLayout.CENTER);
@@ -190,17 +260,27 @@ public class CustomerPanel extends JPanel {
         }
     }
 
-
     private JButton createButton(String text) {
         JButton btn = new JButton(text);
         btn.setBackground(buttonColor); btn.setForeground(Color.WHITE);
-        btn.setFont(labelFont); btn.setFocusPainted(false);
+        btn.setFont(buttonFontLarge); // Use larger font
+        btn.setPreferredSize(new Dimension(100, 45)); // Set preferred size for larger button
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createLineBorder(buttonColor, 2));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) { btn.setBackground(buttonHover); }
             public void mouseExited(MouseEvent e) { btn.setBackground(buttonColor); }
         });
         return btn;
+    }
+
+    // Helper method to create input field border
+    private javax.swing.border.Border createInputBorder() {
+        return BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        );
     }
 
     private void loadCustomers() {

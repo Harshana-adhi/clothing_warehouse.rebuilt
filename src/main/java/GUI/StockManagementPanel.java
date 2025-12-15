@@ -11,6 +11,8 @@ import Models.User;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer; // Added for table styling
+import javax.swing.table.JTableHeader; // Added for table styling
 import java.awt.*;
 import java.awt.event.*;
 import java.math.BigDecimal;
@@ -33,7 +35,7 @@ public class StockManagementPanel extends JPanel {
     private JTable stockTable;
     private DefaultTableModel tableModel;
 
-    // Styling
+    // Styling (Original Styling + New Table Styling Constants)
     private final Color panelBackground = new Color(245, 245, 245);
     private final Color formBackground = Color.WHITE;
     private final Color buttonColor = new Color(0, 150, 136);
@@ -44,9 +46,15 @@ public class StockManagementPanel extends JPanel {
     private final Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
     private final Font inputFont = new Font("Segoe UI", Font.PLAIN, 16);
 
+    // --- New Table Styling Constants ---
+    private final Color tableHeaderBackground = new Color(50, 50, 50);
+    private final Color tableHeaderForeground = Color.WHITE;
+    private final Font headerFont = new Font("Segoe UI", Font.BOLD, 16);
+
     public StockManagementPanel(User user) {
         this.currentUser = user;
 
+        // Original layout and padding
         setLayout(new BorderLayout(10, 10));
         setBackground(panelBackground);
         setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -107,6 +115,7 @@ public class StockManagementPanel extends JPanel {
 
         // Supplier ComboBox
         cmbSupplier = new JComboBox<>();
+        cmbSupplier.setFont(inputFont); // Keep original font size
         loadSuppliers(); // populate combo box
         JLabel lblSupplier = new JLabel("Supplier:");
         lblSupplier.setFont(labelFont);
@@ -174,13 +183,48 @@ public class StockManagementPanel extends JPanel {
         searchPanel.add(new JLabel("Search (ID/Category):")); searchPanel.add(txtSearch); searchPanel.add(btnSearch);
 
         // ------------------ UPDATED TABLE COLUMNS ------------------
-        String[] columns = {"Item ID", "Color", "Material", "Category", "Size", "Quantity", "Cost Price", "Retail Price"};
-        tableModel = new DefaultTableModel(columns,0);
+        String[] columns = {"Item ID", "Color", "Material", "Category", "Size", "Qty", "Cost Price", "Retail Price"};
+
+        // MODIFICATION: Make table view-only
+        tableModel = new DefaultTableModel(columns,0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Ensures all cells are view-only
+            }
+        };
+
         stockTable = new JTable(tableModel);
-        stockTable.setFont(inputFont);
+        stockTable.setFont(inputFont); // Keep original font size (16)
         stockTable.setRowHeight(35);
         stockTable.setSelectionBackground(tableSelection);
+
+        // --- Table Styling (New additions) ---
+        stockTable.setGridColor(new Color(230, 230, 230));
+        stockTable.setShowVerticalLines(false);
+
+        JTableHeader header = stockTable.getTableHeader();
+        header.setFont(headerFont);
+        header.setBackground(tableHeaderBackground);
+        header.setForeground(tableHeaderForeground);
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+        ((DefaultTableCellRenderer)header.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Table Cell Renderer for alternating row colors and padding
+        stockTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Add padding
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? new Color(250, 250, 250) : formBackground); // Subtle alternating row colors
+                }
+                return c;
+            }
+        });
+
         JScrollPane tableScroll = new JScrollPane(stockTable);
+        tableScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200))); // Add border
 
         rightPanel.add(searchPanel, BorderLayout.NORTH);
         rightPanel.add(tableScroll, BorderLayout.CENTER);

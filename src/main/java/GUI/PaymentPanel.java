@@ -7,6 +7,8 @@ import Models.User;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer; // Added for table styling
+import javax.swing.table.JTableHeader; // Added for table styling
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -21,6 +23,7 @@ public class PaymentPanel extends JPanel {
     private JTable paymentTable;
     private DefaultTableModel tableModel;
 
+    // Styling (Original Styling + New Table Styling Constants)
     private final Color panelBackground = new Color(245, 245, 245);
     private final Color formBackground = Color.WHITE;
     private final Color buttonColor = new Color(0, 150, 136);
@@ -30,6 +33,12 @@ public class PaymentPanel extends JPanel {
     private final Color tableSelection = new Color(200, 230, 201);
     private final Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
     private final Font inputFont = new Font("Segoe UI", Font.PLAIN, 16);
+
+    // --- New Table Styling Constants ---
+    private final Color tableHeaderBackground = new Color(50, 50, 50);
+    private final Color tableHeaderForeground = Color.WHITE;
+    private final Font headerFont = new Font("Segoe UI", Font.BOLD, 16);
+    private final Font tableFontSmall = new Font("Segoe UI", Font.PLAIN, 14); // Smaller font for table cells
 
     public PaymentPanel(User user) {
         this.currentUser = user;
@@ -99,17 +108,51 @@ public class PaymentPanel extends JPanel {
         leftPanel.add(formPanel, BorderLayout.CENTER);
         leftPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // --- Right Panel: Table ---
+        // --- Right Panel: Table (MODIFIED) ---
         JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
         rightPanel.setBackground(panelBackground);
 
+        // Define table model as read-only
         tableModel = new DefaultTableModel(new String[]{
-                "Payment ID", "Pay Type", "Amount", "Pay Date", "Employee ID", "Customer ID"}, 0);
+                "Payment ID", "Pay Type", "Amount", "Pay Date", "Employee ID", "Customer ID"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make all cells view-only
+            }
+        };
+
         paymentTable = new JTable(tableModel);
-        paymentTable.setFont(inputFont);
+        paymentTable.setFont(tableFontSmall); // Use smaller font for cells (14)
         paymentTable.setRowHeight(35);
         paymentTable.setSelectionBackground(tableSelection);
+
+        // Apply advanced table styling
+        paymentTable.setGridColor(new Color(230, 230, 230));
+        paymentTable.setShowVerticalLines(false);
+
+        JTableHeader header = paymentTable.getTableHeader();
+        header.setFont(headerFont); // Use header font (16 bold)
+        header.setBackground(tableHeaderBackground);
+        header.setForeground(tableHeaderForeground);
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+        ((DefaultTableCellRenderer)header.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Table Cell Renderer for alternating row colors and padding
+        paymentTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Add padding
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? new Color(250, 250, 250) : formBackground); // Subtle alternating row colors
+                }
+                return c;
+            }
+        });
+
         JScrollPane tableScroll = new JScrollPane(paymentTable);
+        tableScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200))); // Add border
 
         rightPanel.add(tableScroll, BorderLayout.CENTER);
 
