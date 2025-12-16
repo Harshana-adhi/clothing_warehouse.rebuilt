@@ -3,6 +3,7 @@ package GUI;
 import DAO.EmployeeDAO;
 import Models.Employee;
 import Models.User;
+import utils.ValidationUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -35,7 +36,7 @@ public class EmployeePanel extends JPanel {
     private final Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
     private final Font inputFont = new Font("Segoe UI", Font.PLAIN, 16);
     private final Font headerFont = new Font("Segoe UI", Font.BOLD, 16);
-    private final Font buttonFontLarge = new Font("Segoe UI", Font.BOLD, 16); // Slightly larger font for buttons
+    private final Font buttonFontLarge = new Font("Segoe UI", Font.BOLD, 16);
 
     public EmployeePanel(User user) {
         this.currentUser = user;
@@ -125,12 +126,11 @@ public class EmployeePanel extends JPanel {
         buttonPanel.setBackground(formBackground);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
 
-        // --- Back Button ---
         JButton btnBack = new JButton("Back");
         btnBack.setBackground(backButtonColor);
         btnBack.setForeground(Color.WHITE);
-        btnBack.setFont(buttonFontLarge); // Use larger font
-        btnBack.setPreferredSize(new Dimension(100, 45)); // Set preferred size for larger button
+        btnBack.setFont(buttonFontLarge);
+        btnBack.setPreferredSize(new Dimension(100, 45));
         btnBack.setFocusPainted(false);
         btnBack.setBorder(BorderFactory.createLineBorder(backButtonColor, 2));
         btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -141,7 +141,6 @@ public class EmployeePanel extends JPanel {
             public void mouseExited(MouseEvent e) { btnBack.setBackground(backButtonColor); }
         });
         btnBack.addActionListener(e -> {
-            // Go back to Dashboard
             Container topFrame = SwingUtilities.getWindowAncestor(this);
             if(topFrame instanceof MainFrame) {
                 ((MainFrame) topFrame).switchPanel("Dashboard");
@@ -160,7 +159,6 @@ public class EmployeePanel extends JPanel {
         buttonPanel.add(btnDelete); buttonPanel.add(btnClear);
         buttonPanel.add(btnRefresh);
 
-        // Add form and buttons to left panel
         leftPanel.add(formPanel, BorderLayout.CENTER);
         leftPanel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -168,7 +166,6 @@ public class EmployeePanel extends JPanel {
         JPanel rightPanel = new JPanel(new BorderLayout(15, 15));
         rightPanel.setBackground(panelBackground);
 
-        // SEARCH PANEL STYLING
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         searchPanel.setBackground(panelBackground);
         txtSearch = new JTextField(25);
@@ -181,13 +178,9 @@ public class EmployeePanel extends JPanel {
         JLabel lblSearch = new JLabel("Search:"); lblSearch.setFont(labelFont);
         searchPanel.add(lblSearch); searchPanel.add(txtSearch); searchPanel.add(btnSearch);
 
-        // TABLE STYLING
         tableModel = new DefaultTableModel(new String[]{"Employee ID", "Name", "Phone", "Salary", "Position"}, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                // All cells are set to be uneditable (view-only)
-                return false;
-            }
+            public boolean isCellEditable(int row, int column) { return false; }
         };
         employeeTable = new JTable(tableModel);
         employeeTable.setFont(inputFont);
@@ -196,30 +189,23 @@ public class EmployeePanel extends JPanel {
         employeeTable.setGridColor(new Color(230, 230, 230));
         employeeTable.setShowVerticalLines(false);
 
-        // Table Header Styling
         JTableHeader header = employeeTable.getTableHeader();
         header.setFont(headerFont);
         header.setBackground(tableHeaderBackground);
         header.setForeground(tableHeaderForeground);
         header.setReorderingAllowed(false);
         header.setResizingAllowed(true);
-
-        // Center align header text
         ((DefaultTableCellRenderer)header.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Table Cell Renderer for alternating row colors
         employeeTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-                if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? new Color(250, 250, 250) : formBackground);
-                }
+                if (!isSelected) c.setBackground(row % 2 == 0 ? new Color(250, 250, 250) : formBackground);
                 return c;
             }
         });
-
 
         JScrollPane tableScroll = new JScrollPane(employeeTable);
         tableScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
@@ -234,7 +220,6 @@ public class EmployeePanel extends JPanel {
 
         loadEmployees();
 
-        // Row selection
         employeeTable.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 int row = employeeTable.getSelectedRow();
@@ -249,7 +234,6 @@ public class EmployeePanel extends JPanel {
             }
         });
 
-        // Button Actions
         btnAdd.addActionListener(e -> addEmployee());
         btnUpdate.addActionListener(e -> updateEmployee());
         btnDelete.addActionListener(e -> deleteEmployee());
@@ -257,13 +241,11 @@ public class EmployeePanel extends JPanel {
         btnRefresh.addActionListener(e -> loadEmployees());
         btnSearch.addActionListener(e -> searchEmployee());
 
-        // Apply role permissions
         applyRolePermissions();
     }
 
     private void applyRolePermissions() {
         if (currentUser == null) return;
-
         String role = currentUser.getRole().toLowerCase();
         switch (role) {
             case "admin":
@@ -287,8 +269,8 @@ public class EmployeePanel extends JPanel {
     private JButton createButton(String text) {
         JButton btn = new JButton(text);
         btn.setBackground(buttonColor); btn.setForeground(Color.WHITE);
-        btn.setFont(buttonFontLarge); // Use larger font
-        btn.setPreferredSize(new Dimension(100, 45)); // Set preferred size for larger button
+        btn.setFont(buttonFontLarge);
+        btn.setPreferredSize(new Dimension(100, 45));
         btn.setFocusPainted(false);
         btn.setBorder(BorderFactory.createLineBorder(buttonColor, 2));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -315,65 +297,139 @@ public class EmployeePanel extends JPanel {
 
     private void addEmployee() {
         if (!btnAdd.isEnabled()) return;
+
+        String id = txtId.getText().trim();
+        String name = txtName.getText().trim();
+        String phone = txtPhone.getText().trim();
+        String salaryStr = txtSalary.getText().trim();
+        String position = txtPosition.getText().trim();
+
+        // --- START VALIDATION INTEGRATION (ADD) ---
+
+        // 1. Check for required fields
+        if (id.isEmpty() || name.isEmpty() || phone.isEmpty() || salaryStr.isEmpty() || position.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required!", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 2. Employee ID format
+        if (!ValidationUtil.isValidEmployeeID(id)) {
+            JOptionPane.showMessageDialog(this, "Invalid Employee ID format. Must be E followed by 3 or more digits (e.g., E001).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtId.requestFocus();
+            return;
+        }
+
+        // 3. Name format
+        if (!ValidationUtil.isValidName(name)) {
+            JOptionPane.showMessageDialog(this, "Invalid Name format. Name must contain only letters and spaces.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtName.requestFocus();
+            return;
+        }
+
+        // 4. Phone format
+        if (!ValidationUtil.isValidSriLankanMobile(phone)) {
+            JOptionPane.showMessageDialog(this, "Invalid Phone number format. Use 10 digits (07x...) or (+947x...).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtPhone.requestFocus();
+            return;
+        }
+
+        // 5. Salary validation
+        double salary;
         try {
-            String id = txtId.getText().trim();
-            String name = txtName.getText().trim();
-            String phone = txtPhone.getText().trim();
-            String salaryStr = txtSalary.getText().trim();
-            String position = txtPosition.getText().trim();
-
-            if (id.isEmpty() || name.isEmpty() || phone.isEmpty() || salaryStr.isEmpty() || position.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "All fields are required!");
+            salary = Double.parseDouble(salaryStr);
+            if (salary <= 0) {
+                JOptionPane.showMessageDialog(this, "Salary must be a positive number.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                txtSalary.requestFocus();
                 return;
-            }
-
-            double salary = Double.parseDouble(salaryStr);
-            Employee emp = new Employee(id, name, phone, salary, position);
-
-            if ("Manager".equalsIgnoreCase(position) && "Manager".equalsIgnoreCase(currentUser.getRole())) {
-                JOptionPane.showMessageDialog(this, "Managers cannot add another Manager.");
-                return;
-            }
-
-            if (employeeDAO.insert(emp, currentUser)) {
-                JOptionPane.showMessageDialog(this, "Employee added successfully!");
-                loadEmployees();
-                clearForm();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to add employee. Check ID uniqueness or permission.");
             }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Salary must be numeric.");
+            JOptionPane.showMessageDialog(this, "Salary must be a valid numerical value.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtSalary.requestFocus();
+            return;
+        }
+        // --- END VALIDATION INTEGRATION (ADD) ---
+
+        // Business Logic Check (Original logic retained)
+        if ("Manager".equalsIgnoreCase(position) && ("Manager".equalsIgnoreCase(currentUser.getRole()) || "Staff".equalsIgnoreCase(currentUser.getRole()))) {
+            JOptionPane.showMessageDialog(this, "Only Admin can add new Managers.", "Permission Denied", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Employee emp = new Employee(id, name, phone, salary, position);
+
+        if (employeeDAO.insert(emp, currentUser)) {
+            JOptionPane.showMessageDialog(this, "Employee added successfully!");
+            loadEmployees();
+            clearForm();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to add employee. ID may already exist or DB error.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void updateEmployee() {
         if (!btnUpdate.isEnabled()) return;
-        try {
-            String id = txtId.getText().trim();
-            if (id.isEmpty()) { JOptionPane.showMessageDialog(this, "Select an employee to update."); return; }
-            String name = txtName.getText().trim();
-            String phone = txtPhone.getText().trim();
-            double salary = Double.parseDouble(txtSalary.getText().trim());
-            String position = txtPosition.getText().trim();
 
-            Employee emp = new Employee(id, name, phone, salary, position);
-            if (employeeDAO.update(emp, currentUser)) {
-                JOptionPane.showMessageDialog(this, "Employee updated successfully!");
-                loadEmployees();
-                clearForm();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to update employee. Check permissions.");
+        String id = txtId.getText().trim();
+        if (id.isEmpty()) { JOptionPane.showMessageDialog(this, "Select an employee to update.", "Validation Error", JOptionPane.WARNING_MESSAGE); return; }
+
+        String name = txtName.getText().trim();
+        String phone = txtPhone.getText().trim();
+        String salaryStr = txtSalary.getText().trim();
+        String position = txtPosition.getText().trim();
+
+        // --- START VALIDATION INTEGRATION (UPDATE) ---
+        // 1. Check for required fields
+        if (name.isEmpty() || phone.isEmpty() || salaryStr.isEmpty() || position.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields (except ID) are required!", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 2. Name format
+        if (!ValidationUtil.isValidName(name)) {
+            JOptionPane.showMessageDialog(this, "Invalid Name format. Name must contain only letters and spaces.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtName.requestFocus();
+            return;
+        }
+
+        // 3. Phone format
+        if (!ValidationUtil.isValidSriLankanMobile(phone)) {
+            JOptionPane.showMessageDialog(this, "Invalid Phone number format. Use 10 digits (07x...) or (+947x...).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtPhone.requestFocus();
+            return;
+        }
+
+        // 4. Salary validation
+        double salary;
+        try {
+            salary = Double.parseDouble(salaryStr);
+            if (salary <= 0) {
+                JOptionPane.showMessageDialog(this, "Salary must be a positive number.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                txtSalary.requestFocus();
+                return;
             }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Salary must be numeric.");
+            JOptionPane.showMessageDialog(this, "Salary must be a valid numerical value.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtSalary.requestFocus();
+            return;
+        }
+        // --- END VALIDATION INTEGRATION (UPDATE) ---
+
+        Employee emp = new Employee(id, name, phone, salary, position);
+
+        if (employeeDAO.update(emp, currentUser)) {
+            JOptionPane.showMessageDialog(this, "Employee updated successfully!");
+            loadEmployees();
+            clearForm();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update employee. Check permissions or DB error.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void deleteEmployee() {
         if (!btnDelete.isEnabled()) return;
         String id = txtId.getText().trim();
-        if (id.isEmpty()) { JOptionPane.showMessageDialog(this, "Select an employee to delete."); return; }
+        if (id.isEmpty()) { JOptionPane.showMessageDialog(this, "Select an employee to delete.", "Validation Error", JOptionPane.WARNING_MESSAGE); return; }
+
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure to delete this employee?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) return;
 
@@ -382,7 +438,7 @@ public class EmployeePanel extends JPanel {
             loadEmployees();
             clearForm();
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to delete employee. Check permissions.");
+            JOptionPane.showMessageDialog(this, "Failed to delete employee. Check permissions or linked user accounts.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

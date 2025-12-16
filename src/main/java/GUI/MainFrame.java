@@ -65,6 +65,9 @@ public class MainFrame extends JFrame {
         loggedInUser = user; // store current user
         mainPanel.removeAll();
 
+        RefundPanel refundPanel = new RefundPanel(loggedInUser); // <- added
+        UserManagementPanel userPanel = new UserManagementPanel(loggedInUser); // <- added
+
         switch (role.toLowerCase()) {
 
             // ---------------------------------------------------------
@@ -83,7 +86,9 @@ public class MainFrame extends JFrame {
                 mainPanel.add(adminCustomerPanel, "Customer");
                 mainPanel.add(adminSupplierPanel, "Supplier");
                 mainPanel.add(adminStockPanel, "StockManagement");
-                mainPanel.add(adminSalesBilling, "Billing"); // <- fixed
+                mainPanel.add(adminSalesBilling, "Billing");
+                mainPanel.add(refundPanel, "Refund"); // <- added
+                mainPanel.add(userPanel, "User");     // <- added
 
                 statusLabel.setText("Welcome Admin!");
                 break;
@@ -104,7 +109,9 @@ public class MainFrame extends JFrame {
                 mainPanel.add(managerCustomerPanel, "Customer");
                 mainPanel.add(managerSupplierPanel, "Supplier");
                 mainPanel.add(managerStockPanel, "StockManagement");
-                mainPanel.add(managerSalesBilling, "Billing"); // <- fixed
+                mainPanel.add(managerSalesBilling, "Billing");
+                mainPanel.add(refundPanel, "Refund"); // <- added
+                mainPanel.add(userPanel, "User");     // <- added
 
                 statusLabel.setText("Welcome Manager!");
                 break;
@@ -123,7 +130,8 @@ public class MainFrame extends JFrame {
                 mainPanel.add(staffCustomerPanel, "Customer");
                 mainPanel.add(staffSupplierPanel, "Supplier");
                 mainPanel.add(staffStockPanel, "StockManagement");
-                mainPanel.add(staffSalesBilling, "Billing"); // <- fixed
+                mainPanel.add(staffSalesBilling, "Billing");
+                mainPanel.add(refundPanel, "Refund"); // <- added
 
                 statusLabel.setText("Welcome Staff!");
                 break;

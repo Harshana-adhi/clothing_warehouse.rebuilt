@@ -3,6 +3,7 @@ package GUI;
 import DAO.CustomerDAO;
 import Models.Customer;
 import Models.User;
+import utils.ValidationUtil; // <<-- IMPORTED VALIDATION UTIL
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -298,10 +299,33 @@ public class CustomerPanel extends JPanel {
         String address = txtAddress.getText().trim();
         String phone = txtPhone.getText().trim();
 
+        // --- START VALIDATION INTEGRATION (ADD) ---
         if (id.isEmpty() || name.isEmpty() || address.isEmpty() || phone.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "All fields are required!");
+            JOptionPane.showMessageDialog(this, "All fields are required!", "Validation Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        if (!ValidationUtil.isValidCustomerID(id)) {
+            JOptionPane.showMessageDialog(this, "Invalid Customer ID | format  (e.g., C001).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtId.requestFocus();
+            return;
+        }
+
+        if (!ValidationUtil.isValidName(name)) {
+            JOptionPane.showMessageDialog(this, "Invalid Name format. Name must contain only letters and spaces.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtName.requestFocus();
+            return;
+        }
+
+        // Note: Address does not have a specific validation method, so we skip it.
+
+        if (!ValidationUtil.isValidSriLankanMobile(phone)) {
+            JOptionPane.showMessageDialog(this, "Invalid Phone number format. Use  (07x...)|(7x...) or (+947x...).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtPhone.requestFocus();
+            return;
+        }
+        // --- END VALIDATION INTEGRATION (ADD) ---
+
 
         Customer c = new Customer(id, name, address, phone);
         if (customerDAO.insert(c, currentUser)) {
@@ -309,18 +333,38 @@ public class CustomerPanel extends JPanel {
             loadCustomers();
             clearForm();
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to add customer. Check ID uniqueness or permission.");
+            JOptionPane.showMessageDialog(this, "Failed to add customer. Check ID uniqueness or permission.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void updateCustomer() {
         if (!btnUpdate.isEnabled()) return;
         String id = txtId.getText().trim();
-        if (id.isEmpty()) { JOptionPane.showMessageDialog(this, "Select a customer to update."); return; }
+        if (id.isEmpty()) { JOptionPane.showMessageDialog(this, "Select a customer to update.", "Validation Error", JOptionPane.WARNING_MESSAGE); return; }
 
         String name = txtName.getText().trim();
         String address = txtAddress.getText().trim();
         String phone = txtPhone.getText().trim();
+
+        // --- START VALIDATION INTEGRATION (UPDATE) ---
+        if (name.isEmpty() || address.isEmpty() || phone.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Name, Address, and Phone fields are required!", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+
+        if (!ValidationUtil.isValidName(name)) {
+            JOptionPane.showMessageDialog(this, "Invalid Name format. Name must contain only letters and spaces.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtName.requestFocus();
+            return;
+        }
+
+        if (!ValidationUtil.isValidSriLankanMobile(phone)) {
+            JOptionPane.showMessageDialog(this, "Invalid Phone number format. Use 10 digits (07x...) or (+947x...).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtPhone.requestFocus();
+            return;
+        }
+        // --- END VALIDATION INTEGRATION (UPDATE) ---
 
         Customer c = new Customer(id, name, address, phone);
         if (customerDAO.update(c, currentUser)) {
@@ -328,14 +372,14 @@ public class CustomerPanel extends JPanel {
             loadCustomers();
             clearForm();
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to update customer. Check permissions.");
+            JOptionPane.showMessageDialog(this, "Failed to update customer. Check permissions or data integrity.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void deleteCustomer() {
         if (!btnDelete.isEnabled()) return;
         String id = txtId.getText().trim();
-        if (id.isEmpty()) { JOptionPane.showMessageDialog(this, "Select a customer to delete."); return; }
+        if (id.isEmpty()) { JOptionPane.showMessageDialog(this, "Select a customer to delete.", "Validation Error", JOptionPane.WARNING_MESSAGE); return; }
 
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure to delete this customer?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) return;
@@ -345,7 +389,7 @@ public class CustomerPanel extends JPanel {
             loadCustomers();
             clearForm();
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to delete customer. Check permissions.");
+            JOptionPane.showMessageDialog(this, "Failed to delete customer. Check permissions or dependencies.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

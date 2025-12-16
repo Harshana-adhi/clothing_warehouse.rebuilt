@@ -7,6 +7,7 @@ import Models.User;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class BillDetailsDAO {
 
@@ -92,4 +93,46 @@ public class BillDetailsDAO {
         }
         return false;
     }
+
+    // ================= NEW METHODS FOR REFUND =================
+
+    // Get quantity sold for a specific StockId in a particular Bill
+    public int getSoldQuantity(int billId, int stockId){
+        String sql = "SELECT Quantity FROM BillDetails WHERE BillId=? AND StockId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+
+            ps.setInt(1, billId);
+            ps.setInt(2, stockId);
+
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()) return rs.getInt("Quantity");
+            }
+        } catch(SQLException e){
+            System.out.println("Error fetching sold quantity: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    // Update quantity of a bill detail after refund
+    public boolean updateBillDetailQuantity(BillDetails bd){
+        String sql = "UPDATE BillDetails SET Quantity=? WHERE BillDetailId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, bd.getQuantity());
+            ps.setInt(2, bd.getBillDetailId());
+            return ps.executeUpdate() > 0;
+        } catch(SQLException e){
+            System.out.println("Error updating BillDetail quantity: "+e.getMessage());
+            return false;
+        }
+    }
+
+
+    // Get all bill items for refund UI
+    public List<BillDetails> getBillItemsForRefund(int billId){
+        // Same as getByBillId, can be expanded later if needed
+        return getByBillId(billId);
+    }
+
 }

@@ -15,12 +15,12 @@ public class StaffDashboardPanel extends JPanel {
         title.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
         // Button Panel
-        JPanel buttonPanel = new JPanel(new GridLayout(2, 2, 15, 15));
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 15, 15)); // changed to 3x2
         buttonPanel.setBackground(new Color(245, 245, 245));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 100, 30, 100));
 
         JButton btnBilling = createButton("Sales & Billing");
-        btnBilling.addActionListener(e -> mainFrame.switchPanel("Billing")); // ✅ Fixed
+        btnBilling.addActionListener(e -> mainFrame.switchPanel("Billing"));
 
         JButton btnStockManagement = createButton("Stock Management");
         btnStockManagement.addActionListener(e -> mainFrame.switchPanel("StockManagement"));
@@ -31,11 +31,16 @@ public class StaffDashboardPanel extends JPanel {
         JButton btnViewSuppliers = createButton("View Suppliers");
         btnViewSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
 
-        // Add buttons
+        JButton btnRefund = createButton("Refund"); // NEW BUTTON
+        btnRefund.addActionListener(e -> mainFrame.switchPanel("Refund")); // connect to Refund panel
+
+        // Add buttons in order
         buttonPanel.add(btnBilling);
         buttonPanel.add(btnStockManagement);
         buttonPanel.add(btnViewCustomers);
         buttonPanel.add(btnViewSuppliers);
+        buttonPanel.add(btnRefund);
+        buttonPanel.add(new JLabel("")); // filler for grid balance
 
         // Back Button
         JButton btnBack = createBackButton("Back to Login");

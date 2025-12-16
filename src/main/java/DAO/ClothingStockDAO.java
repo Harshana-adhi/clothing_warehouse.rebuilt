@@ -23,28 +23,68 @@ public class ClothingStockDAO {
         }
     }
 
-    // ================== STOCK UPDATE METHODS (NEW) ==================
+    // ================== REFUND METHODS ==================
+    public boolean increaseStockQuantity(int stockId, int qty) {
+        String sql = "UPDATE ClothingStock SET Quantity = Quantity + ? WHERE StockId=?";
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, qty);
+            ps.setInt(2, stockId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Error increasing stock: " + e.getMessage());
+            return false;
+        }
+    }
 
-    public int getAvailableQuantity(Connection conn, int stockId) throws SQLException {
+    public ClothingStock getStockById(int stockId){
+        String sql = "SELECT StockId, ClothId, Color, Size, Quantity FROM ClothingStock WHERE StockId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, stockId);
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()){
+                    ClothingStock cs = new ClothingStock();
+                    cs.setStockId(rs.getInt("StockId"));
+                    cs.setClothId(rs.getString("ClothId"));
+                    cs.setColor(rs.getString("Color"));
+                    cs.setSize(rs.getString("Size"));
+                    cs.setQuantity(rs.getInt("Quantity"));
+                    return cs;
+                }
+            }
+        } catch(SQLException e){
+            System.out.println("Error fetching stock: " + e.getMessage());
+        }
+        return null;
+    }
+
+    // ================== EXISTING METHODS (UNCHANGED) ==================
+    public int getAvailableQuantity(int stockId) {
         String sql = "SELECT Quantity FROM ClothingStock WHERE StockId=?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, stockId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getInt("Quantity");
+        } catch (SQLException e) {
+            System.out.println("Error fetching quantity: " + e.getMessage());
         }
         return 0;
     }
 
-    public boolean reduceStockQuantity(Connection conn, int stockId, int qty) throws SQLException {
+    public boolean reduceStockQuantity(int stockId, int qty) {
         String sql = "UPDATE ClothingStock SET Quantity = Quantity - ? WHERE StockId=?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, qty);
             ps.setInt(2, stockId);
             return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Error reducing stock: " + e.getMessage());
+            return false;
         }
     }
-
-    // ================== EXISTING CODE (UNCHANGED) ==================
 
     public boolean restockItem(ClothingStock stock, User user) {
         if (!hasPermission(user, "restock") || stock == null || stock.getClothId() == null || stock.getClothId().isEmpty())

@@ -4,6 +4,7 @@ import DAO.UserDAO;
 import DAO.EmployeeDAO;
 import Models.User;
 import Models.Employee;
+import utils.ValidationUtil; // Imported for validation logic
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,14 +18,17 @@ public class SignupPanel extends JPanel {
     private JComboBox<String> cmbRole;
     private JButton btnSignup, btnBack;
 
+    private MainFrame mainFrame; // Store reference to MainFrame
+
     public SignupPanel(MainFrame mainFrame) {
+        this.mainFrame = mainFrame; // Initialize reference
 
         setLayout(new BorderLayout());
 
         // --- LEFT PANEL (Form) ---
         JPanel leftPanel = new JPanel(null);
         leftPanel.setBackground(new Color(30, 30, 30));
-        leftPanel.setPreferredSize(new Dimension(450, 650)); // taller for confirm password
+        leftPanel.setPreferredSize(new Dimension(450, 650));
 
         JLabel title = new JLabel("Create Account");
         title.setFont(new Font("Segoe UI", Font.BOLD, 32));
@@ -47,7 +51,7 @@ public class SignupPanel extends JPanel {
         txtUsername.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         txtUsername.setCaretColor(Color.WHITE);
         txtUsername.setFocusable(true);
-        txtUsername.requestFocusInWindow(); // initial focus only
+        txtUsername.requestFocusInWindow();
         leftPanel.add(txtUsername);
 
         // Password
@@ -67,15 +71,22 @@ public class SignupPanel extends JPanel {
         txtPassword.setFocusable(true);
         leftPanel.add(txtPassword);
 
-        // Confirm Password
+        // Password Format Hint (NEWLY ADDED)
+        JLabel lblPasswordHint = new JLabel("Min 6 chars, must include 1 letter and 1 number.");
+        lblPasswordHint.setForeground(new Color(150, 150, 150));
+        lblPasswordHint.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+        lblPasswordHint.setBounds(50, 260, 300, 15);
+        leftPanel.add(lblPasswordHint);
+
+        // Confirm Password (Y position adjusted)
         JLabel lblConfirmPassword = new JLabel("Confirm Password:");
         lblConfirmPassword.setForeground(Color.WHITE);
         lblConfirmPassword.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        lblConfirmPassword.setBounds(50, 270, 150, 30);
+        lblConfirmPassword.setBounds(50, 280, 150, 30);
         leftPanel.add(lblConfirmPassword);
 
         txtConfirmPassword = new JPasswordField();
-        txtConfirmPassword.setBounds(50, 305, 300, 35);
+        txtConfirmPassword.setBounds(50, 315, 300, 35);
         txtConfirmPassword.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         txtConfirmPassword.setBackground(new Color(50, 50, 50));
         txtConfirmPassword.setForeground(Color.WHITE);
@@ -139,6 +150,7 @@ public class SignupPanel extends JPanel {
         scrollPane.setBorder(null);
 
         // --- RIGHT PANEL (Image) ---
+        // Placeholder for the image panel
         ImageIcon icon = new ImageIcon("src/main/resources/loginscreenimage.jpg");
         Image img = icon.getImage();
 
@@ -169,36 +181,75 @@ public class SignupPanel extends JPanel {
         String role = cmbRole.getSelectedItem().toString();
         String employeeId = txtEmployeeId.getText().trim();
 
-        // Check password match
-        if (!password.equals(confirmPassword)) {
-            JOptionPane.showMessageDialog(this, "Passwords do not match!");
+        // --- START VALIDATION INTEGRATION ---
+
+        // 1. Check for basic emptiness
+        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username, Password, and Confirm Password fields are required.", "Validation Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        if ("Admin".equalsIgnoreCase(role)) {
-            employeeId = null;
-        } else if (employeeId.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Employee ID is required for Manager and Staff.");
+        // 2. Validate Username format
+        if (!ValidationUtil.isValidUsername(username)) {
+            JOptionPane.showMessageDialog(this, "Invalid Username format. Must be 4-20 characters long and contain only letters, numbers, dot, or underscore.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtUsername.requestFocus();
             return;
         }
+
+        // 3. Validate Password strength
+        if (!ValidationUtil.isValidPassword(password)) {
+            JOptionPane.showMessageDialog(this, "Invalid Password. Must be at least 6 characters long and contain at least one letter and one number.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtPassword.requestFocus();
+            return;
+        }
+
+        // 4. Check password match
+        if (!password.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(this, "Passwords do not match!", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtConfirmPassword.requestFocus();
+            return;
+        }
+
+        // 5. Employee ID validation based on Role
+        if ("Admin".equalsIgnoreCase(role)) {
+            employeeId = null;
+        } else {
+            if (employeeId.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Employee ID is required for Manager and Staff accounts.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                txtEmployeeId.requestFocus();
+                return;
+            }
+            if (!ValidationUtil.isValidEmployeeID(employeeId)) {
+                JOptionPane.showMessageDialog(this, "Invalid Employee ID format. Must be E followed by 3 or more digits (e.g., E001).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                txtEmployeeId.requestFocus();
+                return;
+            }
+        }
+        // --- END VALIDATION INTEGRATION ---
 
         UserDAO dao = new UserDAO();
         EmployeeDAO empDao = new EmployeeDAO();
         Employee emp = null;
 
+        // Perform existence check for non-Admin roles
         if (employeeId != null) {
             emp = empDao.getById(employeeId);
             if (emp == null) {
-                JOptionPane.showMessageDialog(this, "No employee found with ID: " + employeeId);
+                JOptionPane.showMessageDialog(this, "No employee found with ID: " + employeeId, "Employee Check Failed", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
 
+        // Attempt to create user account
         boolean added = dao.signup(new User(username, password, role, employeeId));
+
         if (added) {
-            JOptionPane.showMessageDialog(this, "Account created successfully!");
+            JOptionPane.showMessageDialog(this, "Account created successfully! You can now log in.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            // Navigate back to the Login panel after successful signup
+            mainFrame.showLoginPanel();
         } else {
-            JOptionPane.showMessageDialog(this, "Error creating account!");
+            // This usually means the username already exists in the database
+            JOptionPane.showMessageDialog(this, "Error creating account! The username may already exist or there was a database error.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

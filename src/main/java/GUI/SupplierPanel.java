@@ -3,12 +3,13 @@ package GUI;
 import DAO.SupplierDAO;
 import Models.Supplier;
 import Models.User;
+import utils.ValidationUtil; // <<-- IMPORTED VALIDATION UTIL
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.DefaultTableCellRenderer; // Added for table styling
-import javax.swing.table.JTableHeader; // Added for table styling
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -236,45 +237,90 @@ public class SupplierPanel extends JPanel {
         String id = txtId.getText().trim();
         String name = txtName.getText().trim();
         String phone = txtPhone.getText().trim();
+
+        // --- START VALIDATION INTEGRATION (ADD) ---
         if(id.isEmpty() || name.isEmpty() || phone.isEmpty()){
-            JOptionPane.showMessageDialog(this,"All fields are required!");
+            JOptionPane.showMessageDialog(this,"All fields are required!", "Validation Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        if (!ValidationUtil.isValidSupplierID(id)) {
+            JOptionPane.showMessageDialog(this, "Invalid Supplier ID format. Must be S followed by 3 or more digits (e.g., S001).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtId.requestFocus();
+            return;
+        }
+
+        if (!ValidationUtil.isValidName(name)) {
+            JOptionPane.showMessageDialog(this, "Invalid Name format. Name must contain only letters and spaces.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtName.requestFocus();
+            return;
+        }
+
+        if (!ValidationUtil.isValidSriLankanMobile(phone)) {
+            JOptionPane.showMessageDialog(this, "Invalid Phone number format. Use 10 digits (07x...) or (+947x...).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtPhone.requestFocus();
+            return;
+        }
+        // --- END VALIDATION INTEGRATION (ADD) ---
+
         Supplier s = new Supplier(id,name,phone);
         if(supplierDAO.insert(s,currentUser)){
             JOptionPane.showMessageDialog(this,"Supplier added successfully!");
             loadSuppliers(); clearForm();
         } else {
-            JOptionPane.showMessageDialog(this,"Failed to add supplier. Check ID uniqueness or permission.");
+            JOptionPane.showMessageDialog(this,"Failed to add supplier. Check ID uniqueness or permission.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void updateSupplier(){
         if(!btnUpdate.isEnabled()) return;
         String id = txtId.getText().trim();
-        if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select a supplier to update."); return; }
+        if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select a supplier to update.", "Validation Error", JOptionPane.WARNING_MESSAGE); return; }
+
         String name = txtName.getText().trim();
         String phone = txtPhone.getText().trim();
+
+        // --- START VALIDATION INTEGRATION (UPDATE) ---
+        if(name.isEmpty() || phone.isEmpty()){
+            JOptionPane.showMessageDialog(this,"Name and Phone fields are required!", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (!ValidationUtil.isValidName(name)) {
+            JOptionPane.showMessageDialog(this, "Invalid Name format. Name must contain only letters and spaces.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtName.requestFocus();
+            return;
+        }
+
+        if (!ValidationUtil.isValidSriLankanMobile(phone)) {
+            JOptionPane.showMessageDialog(this, "Invalid Phone number format. Use 10 digits (07x...) or (+947x...).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtPhone.requestFocus();
+            return;
+        }
+        // --- END VALIDATION INTEGRATION (UPDATE) ---
+
         Supplier s = new Supplier(id,name,phone);
         if(supplierDAO.update(s,currentUser)){
             JOptionPane.showMessageDialog(this,"Supplier updated successfully!");
             loadSuppliers(); clearForm();
         } else {
-            JOptionPane.showMessageDialog(this,"Failed to update supplier. Check permission.");
+            JOptionPane.showMessageDialog(this,"Failed to update supplier. Check permission.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void deleteSupplier(){
         if(!btnDelete.isEnabled()) return;
         String id = txtId.getText().trim();
-        if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select a supplier to delete."); return; }
+        if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select a supplier to delete.", "Validation Error", JOptionPane.WARNING_MESSAGE); return; }
+
         int confirm = JOptionPane.showConfirmDialog(this,"Are you sure to delete this supplier?","Confirm Delete",JOptionPane.YES_NO_OPTION);
         if(confirm!=JOptionPane.YES_OPTION) return;
+
         if(supplierDAO.delete(id,currentUser)){
             JOptionPane.showMessageDialog(this,"Supplier deleted successfully!");
             loadSuppliers(); clearForm();
         } else {
-            JOptionPane.showMessageDialog(this,"Failed to delete supplier. Check permission.");
+            JOptionPane.showMessageDialog(this,"Failed to delete supplier. Check permission.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

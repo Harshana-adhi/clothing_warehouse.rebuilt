@@ -7,12 +7,13 @@ import Models.ClothingItem;
 import Models.ClothingStock;
 import Models.Supplier;
 import Models.User;
+import utils.ValidationUtil; // <<-- IMPORTED VALIDATION UTIL
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.DefaultTableCellRenderer; // Added for table styling
-import javax.swing.table.JTableHeader; // Added for table styling
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.*;
 import java.math.BigDecimal;
@@ -126,6 +127,7 @@ public class StockManagementPanel extends JPanel {
     }
 
     private void loadSuppliers() {
+        // Assume SupplierDAO has a getAllSuppliers() method
         supplierList = new SupplierDAO().getAllSuppliers();
         cmbSupplier.removeAllItems();
         for (Supplier s : supplierList) {
@@ -157,6 +159,7 @@ public class StockManagementPanel extends JPanel {
 
         btnBack.addActionListener(e -> {
             Container topFrame = SwingUtilities.getWindowAncestor(this);
+            // Assuming MainFrame exists
             if(topFrame instanceof MainFrame) ((MainFrame)topFrame).switchPanel("Dashboard");
         });
 
@@ -257,6 +260,27 @@ public class StockManagementPanel extends JPanel {
         return btn;
     }
 
+    // ------------------- VALIDATION UTILITY -------------------
+
+    // Helper function to validate price inputs
+    private boolean validatePrice(String priceStr, String fieldName) {
+        if (priceStr.isEmpty()) {
+            JOptionPane.showMessageDialog(this, fieldName + " is required.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        try {
+            BigDecimal price = new BigDecimal(priceStr);
+            if (price.compareTo(BigDecimal.ZERO) < 0) {
+                JOptionPane.showMessageDialog(this, fieldName + " cannot be negative.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, fieldName + " must be a valid numerical value.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
     // ------------------- ROLE PERMISSIONS -------------------
 
     private void applyRolePermissions(){
@@ -286,17 +310,19 @@ public class StockManagementPanel extends JPanel {
         try {
             List<Object[]> stockList = stockDAO.getAllStockForBilling(); // Updated DAO method
             for(Object[] row : stockList){
+                // Retrieve item details for material and cost price which are stored separately
                 ClothingItem item = itemDAO.getItemById((String)row[1]);
+                String material = item != null ? item.getMaterial() : "-";
                 String costPrice = item != null ? item.getCostPrice().toString() : "-";
 
                 tableModel.addRow(new String[]{
                         row[1].toString(),     // ClothId / Item ID
                         row[2] != null ? row[2].toString() : "-", // Color
-                        item != null ? item.getMaterial() : "-", // Material
-                        row[6] != null ? row[6].toString() : "-", // Category from DAO
+                        material,                              // Material (from Item)
+                        row[6] != null ? row[6].toString() : "-", // Category
                         row[3] != null ? row[3].toString() : "-", // Size
                         row[4] != null ? row[4].toString() : "0", // Quantity
-                        costPrice,                                 // Cost Price
+                        costPrice,                                 // Cost Price (from Item)
                         row[5] != null ? row[5].toString() : "-"  // Retail Price
                 });
             }
@@ -344,10 +370,38 @@ public class StockManagementPanel extends JPanel {
         int sel = cmbSupplier.getSelectedIndex();
         if(sel >= 0) supId = supplierList.get(sel).getSupplierId();
 
-        if(id.isEmpty() || material.isEmpty() || costStr.isEmpty() || retailStr.isEmpty()){
-            JOptionPane.showMessageDialog(this,"Item ID, Material, Cost Price and Retail Price are required!");
+        // --- START VALIDATION INTEGRATION (ADD) ---
+        if(id.isEmpty()){
+            JOptionPane.showMessageDialog(this,"Item ID is required.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtClothId.requestFocus();
             return;
         }
+
+        if (!ValidationUtil.isValidItemID(id)) {
+            JOptionPane.showMessageDialog(this, "Invalid Item ID format. Must be I followed by 3 or more digits (e.g., I001).", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtClothId.requestFocus();
+            return;
+        }
+
+        if (material.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Material (Name) is required.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtMaterial.requestFocus();
+            return;
+        }
+
+        // Material is treated as a descriptive name, using isValidName strictly might be too restrictive for materials (e.g., Nylon/Spandex Blend). We will use a basic emptiness check.
+        // If you intended Material to be strictly A-Z only, use ValidationUtil.isValidName(material). For now, we only check emptiness.
+
+        if (!validatePrice(costStr, "Cost Price")) {
+            txtCostPrice.requestFocus();
+            return;
+        }
+
+        if (!validatePrice(retailStr, "Retail Price")) {
+            txtRetailPrice.requestFocus();
+            return;
+        }
+        // --- END VALIDATION INTEGRATION (ADD) ---
 
         try {
             BigDecimal cost = new BigDecimal(costStr);
@@ -359,10 +413,10 @@ public class StockManagementPanel extends JPanel {
                 clearForm();
                 txtClothId.setText(id);
             } else {
-                JOptionPane.showMessageDialog(this,"Failed to add item. ID may exist or DB error.");
+                JOptionPane.showMessageDialog(this,"Failed to add item. ID may exist or DB error.", "Database Error", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Cost and Retail Price must be valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "An unexpected error occurred during item addition: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -370,42 +424,64 @@ public class StockManagementPanel extends JPanel {
         if(!btnUpdateItem.isEnabled()) return;
 
         String id = txtClothId.getText().trim();
-        if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select an item to update."); return; }
+        if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select an item to update.", "Validation Error", JOptionPane.WARNING_MESSAGE); return; }
+
+        String material = txtMaterial.getText().trim();
+        String costStr = txtCostPrice.getText().trim();
+        String retailStr = txtRetailPrice.getText().trim();
 
         String supId = "";
         int sel = cmbSupplier.getSelectedIndex();
         if(sel >= 0) supId = supplierList.get(sel).getSupplierId();
 
+        // --- START VALIDATION INTEGRATION (UPDATE) ---
+        if (material.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Material (Name) is required.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtMaterial.requestFocus();
+            return;
+        }
+
+        if (!validatePrice(costStr, "Cost Price")) {
+            txtCostPrice.requestFocus();
+            return;
+        }
+
+        if (!validatePrice(retailStr, "Retail Price")) {
+            txtRetailPrice.requestFocus();
+            return;
+        }
+        // --- END VALIDATION INTEGRATION (UPDATE) ---
+
         try {
-            BigDecimal cost = new BigDecimal(txtCostPrice.getText().trim());
-            BigDecimal retail = new BigDecimal(txtRetailPrice.getText().trim());
-            ClothingItem item = new ClothingItem(id, txtMaterial.getText().trim(),
+            BigDecimal cost = new BigDecimal(costStr);
+            BigDecimal retail = new BigDecimal(retailStr);
+            ClothingItem item = new ClothingItem(id, material,
                     txtCategory.getText().trim(), cost, retail, supId);
 
             if(itemDAO.update(item, currentUser)){
                 JOptionPane.showMessageDialog(this,"Item details updated!");
                 loadStockData(); clearForm();
             } else {
-                JOptionPane.showMessageDialog(this,"Failed to update item details.");
+                JOptionPane.showMessageDialog(this,"Failed to update item details.", "Database Error", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Cost and Retail Price must be valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "An unexpected error occurred during update: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void deleteItem(){
         if(!btnDeleteItem.isEnabled()) return;
         String id = txtClothId.getText().trim();
-        if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select an item to delete."); return; }
+        if(id.isEmpty()){ JOptionPane.showMessageDialog(this,"Select an item to delete.", "Validation Error", JOptionPane.WARNING_MESSAGE); return; }
 
-        int confirm = JOptionPane.showConfirmDialog(this,"Are you sure to delete item " + id + "?","Confirm Delete",JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this,"Are you sure to delete item " + id + "? (This also removes all associated stock)","Confirm Delete",JOptionPane.YES_NO_OPTION);
         if(confirm!=JOptionPane.YES_OPTION) return;
 
         if(itemDAO.delete(id, currentUser)){
             JOptionPane.showMessageDialog(this,"Item deleted successfully!");
             loadStockData(); clearForm();
         } else {
-            JOptionPane.showMessageDialog(this,"Failed to delete item.");
+            JOptionPane.showMessageDialog(this,"Failed to delete item. It may have existing dependencies or you lack permission.", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -417,7 +493,15 @@ public class StockManagementPanel extends JPanel {
         JTextField sizeField = new JTextField(10);
         JTextField qtyField = new JTextField(10);
 
-        if(!idField.getText().isEmpty()) idField.setEditable(false);
+        // --- START VALIDATION INTEGRATION (RESTOCK DIALOG PRE-CHECK) ---
+        if(!idField.getText().isEmpty()) {
+            if (!ValidationUtil.isValidItemID(idField.getText().trim())) {
+                JOptionPane.showMessageDialog(this, "Selected Item ID is invalid. Please clear form and re-select or input a valid ID.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            idField.setEditable(false);
+        }
+        // --- END VALIDATION INTEGRATION (RESTOCK DIALOG PRE-CHECK) ---
 
         JPanel panel = new JPanel(new GridLayout(0, 2));
         panel.add(new JLabel("Item ID:")); panel.add(idField);
@@ -433,22 +517,52 @@ public class StockManagementPanel extends JPanel {
                 String clothId = idField.getText().trim();
                 String color = colorField.getText().trim();
                 String size = sizeField.getText().trim();
-                int qty = Integer.parseInt(qtyField.getText().trim());
+                String qtyStr = qtyField.getText().trim();
 
-                if(clothId.isEmpty() || size.isEmpty() || qty <= 0){
-                    JOptionPane.showMessageDialog(this,"All fields valid and quantity > 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                // --- START VALIDATION INTEGRATION (RESTOCK DIALOG POST-CHECK) ---
+                if(clothId.isEmpty()){
+                    JOptionPane.showMessageDialog(this, "Item ID cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
+
+                if (!ValidationUtil.isValidItemID(clothId)) {
+                    JOptionPane.showMessageDialog(this, "Item ID is invalid (Format: I001+).", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (size.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Size cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (qtyStr.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Quantity cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                int qty;
+                try {
+                    qty = Integer.parseInt(qtyStr);
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(this, "Quantity must be a whole number.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (qty <= 0){
+                    JOptionPane.showMessageDialog(this,"Quantity must be greater than 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                // --- END VALIDATION INTEGRATION (RESTOCK DIALOG POST-CHECK) ---
 
                 ClothingStock stock = new ClothingStock(clothId, color, size, qty);
                 if(stockDAO.restockItem(stock, currentUser)){
                     JOptionPane.showMessageDialog(this, qty + " units added to stock for " + clothId);
                     loadStockData();
                 } else {
-                    JOptionPane.showMessageDialog(this,"Restock failed.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this,"Restock failed. Item ID may not exist or DB error.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex){
-                JOptionPane.showMessageDialog(this,"Error: "+ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,"An unexpected error occurred: "+ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -478,7 +592,8 @@ public class StockManagementPanel extends JPanel {
                 String costPrice = item != null ? item.getCostPrice().toString() : "-";
                 String retailPrice = item != null ? item.getRetailPrice().toString() : "-";
 
-                if(clothId.contains(keyword) || category.toLowerCase().contains(keyword.toLowerCase())){
+                // Simple keyword check on ID or Category
+                if(clothId.toLowerCase().contains(keyword.toLowerCase()) || category.toLowerCase().contains(keyword.toLowerCase())){
                     tableModel.addRow(new String[]{
                             clothId,
                             row[2] != null ? row[2].toString() : "-", // Color

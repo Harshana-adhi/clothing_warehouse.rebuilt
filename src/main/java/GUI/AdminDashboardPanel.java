@@ -26,6 +26,7 @@ public class AdminDashboardPanel extends JPanel {
         buttonPanel.setBackground(panelBackground);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 200, 30, 200));
 
+        // --- Buttons ---
         JButton btnManageEmployees = createButton("Manage Employees");
         btnManageEmployees.addActionListener(e -> mainFrame.switchPanel("Employee"));
 
@@ -39,22 +40,23 @@ public class AdminDashboardPanel extends JPanel {
         btnSuppliers.addActionListener(e -> mainFrame.switchPanel("Supplier"));
 
         JButton btnSalesBilling = createButton("Sales & Billing");
-        btnSalesBilling.addActionListener(e -> mainFrame.switchPanel("Billing")); // ✅ FIXED
+        btnSalesBilling.addActionListener(e -> mainFrame.switchPanel("Billing"));
 
-        JButton btnReports = createButton("Reports");
+        JButton btnRefund = createButton("Refund");
+        btnRefund.addActionListener(e -> mainFrame.switchPanel("Refund"));
 
         JButton btnManageCustomers = createButton("Manage Customers");
         btnManageCustomers.addActionListener(e -> mainFrame.switchPanel("Customer"));
 
-        // Add buttons in order
+        // Add buttons in 4x2 grid order
         buttonPanel.add(btnManageEmployees);
-        buttonPanel.add(btnManageUsers);
+        buttonPanel.add(btnManageUsers); // ✅ Manage Users button stays
         buttonPanel.add(btnStockManagement);
         buttonPanel.add(btnSuppliers);
         buttonPanel.add(btnSalesBilling);
-        buttonPanel.add(btnReports);
+        buttonPanel.add(btnRefund);
         buttonPanel.add(btnManageCustomers);
-        buttonPanel.add(new JLabel("")); // keep 4x2 grid balanced
+        buttonPanel.add(new JLabel("")); // keep grid balanced
 
         JButton btnBack = createBackButton("Back to Login");
         btnBack.addActionListener(e -> mainFrame.showLoginPanel());

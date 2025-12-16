@@ -57,7 +57,7 @@ public class PaymentDAO {
         return false;
     }
 
-    // Create payment and return generated PaymentId (using real logged-in user)
+    // Create payment and return generated PaymentId
     public Integer createPayment(String payType, BigDecimal amount, User user, String customerId){
         if(user == null || !hasPermission(user, "add")) return null;
 
@@ -155,5 +155,53 @@ public class PaymentDAO {
             System.out.println("Error fetching all Payments: " + e.getMessage());
         }
         return list;
+    }
+
+    // Get Payment Method by BillId
+    public String getPaymentMethodByBillId(int billId){
+        String sql = "SELECT p.PayType FROM Payment p " +
+                "JOIN Billing b ON p.PaymentId = b.PaymentId " +
+                "WHERE b.BillId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, billId);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()) return rs.getString("PayType");
+        } catch(SQLException e){
+            System.out.println("Error fetching payment method: "+e.getMessage());
+        }
+        return null;
+    }
+
+    // ===================== NEW METHODS FOR PARTIAL REFUND =====================
+
+    // Get PaymentId by BillId
+    public Integer getPaymentIdByBillId(int billId){
+        String sql = "SELECT PaymentId FROM Billing WHERE BillId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setInt(1, billId);
+            try(ResultSet rs = ps.executeQuery()){
+                if(rs.next()) return rs.getInt("PaymentId");
+            }
+        } catch(SQLException e){
+            System.out.println("Error fetching PaymentId by BillId: " + e.getMessage());
+        }
+        return null;
+    }
+
+    // Adjust payment amount (reduce amount for partial refund)
+    public boolean adjustPaymentAmount(int paymentId, BigDecimal refundAmount, User user){
+        if(!hasPermission(user, "update")) return false;
+        String sql = "UPDATE Payment SET Amount = Amount - ? WHERE PaymentId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setBigDecimal(1, refundAmount);
+            ps.setInt(2, paymentId);
+            return ps.executeUpdate() > 0;
+        } catch(SQLException e){
+            System.out.println("Error adjusting payment amount: " + e.getMessage());
+        }
+        return false;
     }
 }

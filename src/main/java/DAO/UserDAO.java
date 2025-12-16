@@ -4,11 +4,15 @@ import DBConnection.DBConnect;
 import Models.User;
 import DAO.EmployeeDAO;
 import Models.Employee;
-import utils.PasswordUtil;   // <-- ADD THIS
+import utils.PasswordUtil;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO {
+
+    // ================= EXISTING CODE (Signup/Login/etc.) =================
 
     // REGISTER USER with employee rules
     public boolean signup(User user) {
@@ -177,5 +181,206 @@ public class UserDAO {
             System.out.println("Check Employee Account Error: " + e.getMessage());
             return false;
         }
+    }
+
+    // ================= NEW METHODS (Role-based Management) =================
+
+    // Role permission check
+    private boolean hasPermission(User currentUser, String operation, String targetRole) {
+        if (currentUser == null) return false;
+        String role = currentUser.getRole();
+        switch (operation.toUpperCase()) {
+            case "ADD":
+            case "UPDATE":
+            case "DELETE":
+                if ("Admin".equalsIgnoreCase(role)) return true;
+                if ("Manager".equalsIgnoreCase(role)) return "Staff".equalsIgnoreCase(targetRole);
+                return false;
+            case "VIEW":
+                return "Admin".equalsIgnoreCase(role) || "Manager".equalsIgnoreCase(role);
+            default:
+                return false;
+        }
+    }
+
+    // CREATE user (Admin/Manager)
+    public boolean createUser(User newUser, User currentUser) {
+        if (!hasPermission(currentUser, "ADD", newUser.getRole())) return false;
+
+        String sql = "INSERT INTO Users (Username, Password, Role, EmployeeId) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            // hash password
+            String hashedPassword = PasswordUtil.hashPassword(newUser.getPassword());
+
+            ps.setString(1, newUser.getUsername());
+            ps.setString(2, hashedPassword);
+            ps.setString(3, newUser.getRole());
+            ps.setString(4, newUser.getEmployeeId());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Create User Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // UPDATE user (Admin/Manager)
+    public boolean updateUser(User userToUpdate, User currentUser) {
+        if (!hasPermission(currentUser, "UPDATE", userToUpdate.getRole())) return false;
+
+        String sql = "UPDATE Users SET Username=?, Password=?, Role=?, EmployeeId=? WHERE UserId=?";
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            // hash password
+            String hashedPassword = PasswordUtil.hashPassword(userToUpdate.getPassword());
+
+            ps.setString(1, userToUpdate.getUsername());
+            ps.setString(2, hashedPassword);
+            ps.setString(3, userToUpdate.getRole());
+            ps.setString(4, userToUpdate.getEmployeeId());
+            ps.setInt(5, userToUpdate.getUserId());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Update User Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    // DELETE user (Admin/Manager)
+    public boolean deleteUser(int userId, String targetRole, User currentUser) {
+        // Prevent deleting Admin unless currentUser is Admin
+        if ("Admin".equalsIgnoreCase(targetRole) && !"Admin".equalsIgnoreCase(currentUser.getRole())) {
+            System.out.println("Only Admin can delete Admin account!");
+            return false;
+        }
+
+        if (!hasPermission(currentUser, "DELETE", targetRole)) return false;
+
+        String sql = "DELETE FROM Users WHERE UserId=?";
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Delete User Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    // GET user by ID
+    public User getUserById(int userId) {
+        String sql = "SELECT * FROM Users WHERE UserId=?";
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new User(
+                        rs.getInt("UserId"),
+                        rs.getString("Username"),
+                        rs.getString("Password"),
+                        rs.getString("Role"),
+                        rs.getString("EmployeeId")
+                );
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Get User Error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    // GET all users (Admin sees all, Manager sees Staff only)
+    public List<User> getAllUsers(User currentUser) {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM Users";
+
+        try (Connection conn = DBConnect.getDBConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                String role = rs.getString("Role");
+
+                if (!hasPermission(currentUser, "VIEW", role)) continue;
+
+                list.add(new User(
+                        rs.getInt("UserId"),
+                        rs.getString("Username"),
+                        rs.getString("Password"),
+                        role,
+                        rs.getString("EmployeeId")
+                ));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Get All Users Error: " + e.getMessage());
+        }
+
+        return list;
+    }
+
+    // CHECK if username exists (for CRUD)
+    public boolean userExists(String username) {
+        String sql = "SELECT UserId FROM Users WHERE Username=?";
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+
+        } catch (SQLException e) {
+            System.out.println("Check User Exists Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ADDED METHOD TO SUPPORT SEARCH FUNCTIONALITY
+    public List<User> searchUsers(String keyword, User currentUser) {
+        List<User> list = new ArrayList<>();
+        // Search by Username OR EmployeeId
+        String sql = "SELECT * FROM Users WHERE Username LIKE ? OR EmployeeId LIKE ?";
+
+        try (Connection conn = DBConnect.getDBConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            String searchPattern = "%" + keyword + "%";
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String role = rs.getString("Role");
+
+                // Apply existing role-based view permission check
+                if (!hasPermission(currentUser, "VIEW", role)) continue;
+
+                list.add(new User(
+                        rs.getInt("UserId"),
+                        rs.getString("Username"),
+                        rs.getString("Password"),
+                        role,
+                        rs.getString("EmployeeId")
+                ));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Search Users Error: " + e.getMessage());
+        }
+
+        return list;
     }
 }

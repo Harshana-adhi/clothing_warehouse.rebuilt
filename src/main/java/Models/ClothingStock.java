@@ -7,6 +7,8 @@ public class ClothingStock {
     private String size;
     private int quantity;
 
+    public ClothingStock() {}
+
     // Full Constructor (Used when retrieving data from DB)
     public ClothingStock(int stockId, String clothId, String color, String size, int quantity) {
         this.stockId = stockId;

@@ -220,4 +220,20 @@ public class BillingDAO {
         }
         return list;
     }
+
+    // ===================== REFUND RELATED METHODS =====================
+
+    // Update BillStatus (Paid, Partially Refunded, Refunded)
+    public boolean updateBillStatus(int billId, String status){
+        String sql = "UPDATE Billing SET BillStatus=? WHERE BillId=?";
+        try(Connection conn = DBConnect.getDBConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setString(1, status);
+            ps.setInt(2, billId);
+            return ps.executeUpdate() > 0;
+        } catch(SQLException e){
+            System.out.println("Error updating BillStatus: " + e.getMessage());
+        }
+        return false;
+    }
 }
