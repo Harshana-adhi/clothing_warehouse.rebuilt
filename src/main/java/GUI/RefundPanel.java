@@ -64,8 +64,11 @@ public class RefundPanel extends JPanel {
         styleTable(tblBills);
 
         billItemsTableModel = new DefaultTableModel(
-                new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty Sold"}, 0) {
-            @Override public boolean isCellEditable(int row, int column) { return false; }
+                new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty Sold", "Qty to Refund"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 6; // ONLY Qty to Refund editable
+            }
         };
         tblBillItems = new JTable(billItemsTableModel);
         styleTable(tblBillItems);
@@ -82,7 +85,8 @@ public class RefundPanel extends JPanel {
         tblRefundDetails = new JTable(refundDetailsTableModel);
         styleTable(tblRefundDetails);
 
-        JSplitPane tablesSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitTop, new JScrollPane(tblRefundDetails));
+        JSplitPane tablesSplit = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT, splitTop, new JScrollPane(tblRefundDetails));
         tablesSplit.setResizeWeight(0.7);
         tablesSplit.setOneTouchExpandable(true);
 
@@ -134,7 +138,8 @@ public class RefundPanel extends JPanel {
 
         btnBack.addActionListener(e -> {
             Container topFrame = SwingUtilities.getWindowAncestor(this);
-            if (topFrame instanceof MainFrame) ((MainFrame) topFrame).switchPanel("Dashboard");
+            if (topFrame instanceof MainFrame)
+                ((MainFrame) topFrame).switchPanel("Dashboard");
         });
 
         btnRefresh.addActionListener(e -> {
@@ -157,70 +162,13 @@ public class RefundPanel extends JPanel {
         loadRefundDetails();
     }
 
-    private void stylePrimaryButton(JButton btn){
-        btn.setBackground(buttonColor);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btn.setBorder(BorderFactory.createLineBorder(buttonColor, 2));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { btn.setBackground(buttonHover); }
-            public void mouseExited(MouseEvent e) { btn.setBackground(buttonColor); }
-        });
-    }
-
-    private void styleBackButton(JButton btn){
-        btn.setBackground(backButtonColor);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setFont(buttonFontLarge);
-        btn.setBorder(BorderFactory.createLineBorder(backButtonColor, 2));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) { btn.setBackground(backButtonhover); }
-            @Override
-            public void mouseExited(MouseEvent e) { btn.setBackground(backButtonColor); }
-        });
-    }
-
-    private void styleTable(JTable table){
-        table.setFont(inputFont);
-        table.setRowHeight(35);
-        table.setSelectionBackground(tableSelection);
-        table.setGridColor(new Color(230, 230, 230));
-        table.setShowVerticalLines(false);
-        table.setFillsViewportHeight(true);
-        table.setIntercellSpacing(new Dimension(0, 0));
-
-        JTableHeader header = table.getTableHeader();
-        header.setFont(headerFont);
-        header.setBackground(tableHeaderBackground);
-        header.setForeground(tableHeaderForeground);
-        header.setReorderingAllowed(false);
-        header.setResizingAllowed(true);
-        ((DefaultTableCellRenderer)header.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value,
-                                                           boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-                if (!isSelected) { c.setBackground(row % 2 == 0 ? new Color(250, 250, 250) : formBackground); }
-                setHorizontalAlignment(JLabel.CENTER);
-                return c;
-            }
-        });
-    }
-
     private void refreshBillTable() {
         billTableModel.setRowCount(0);
         billList = billingDAO.getAll();
         for (Billing b : billList) {
             billTableModel.addRow(new Object[]{
-                    b.getBillId(), b.getCustomerId(), b.getBillDate(), b.getAmount(), b.getBillStatus()
+                    b.getBillId(), b.getCustomerId(),
+                    b.getBillDate(), b.getAmount(), b.getBillStatus()
             });
         }
     }
@@ -239,13 +187,14 @@ public class RefundPanel extends JPanel {
         for (BillDetails bd : currentBillItems) {
             Integer stockIdObj = bd.getStockId();
             if (stockIdObj == null) continue;
-            int stockId = stockIdObj;
 
-            Object[] info = stockDAO.getStockInfoByStockId(stockId);
+            Object[] info = stockDAO.getStockInfoByStockId(stockIdObj);
             String category = info.length > 4 && info[4] != null ? info[4].toString() : "-";
 
+            // Qty to Refund = 0 (does NOT touch Qty Sold)
             billItemsTableModel.addRow(new Object[]{
-                    stockId, info[0], category, info[1], info[2], bd.getQuantity()
+                    stockIdObj, info[0], category, info[1], info[2],
+                    bd.getQuantity(), 0
             });
         }
     }
@@ -275,25 +224,30 @@ public class RefundPanel extends JPanel {
             return;
         }
 
-        int stockId = (int) tblBillItems.getValueAt(selectedRow, 0);
         int soldQty = (int) tblBillItems.getValueAt(selectedRow, 5);
 
         String input = JOptionPane.showInputDialog(this,
-                "Enter quantity to refund (Max " + soldQty + "):", "Refund Quantity",
+                "Enter quantity to refund (Max " + soldQty + "):",
+                "Refund Quantity",
                 JOptionPane.PLAIN_MESSAGE);
 
         if (input == null) return;
 
         int qty;
         try { qty = Integer.parseInt(input); }
-        catch (NumberFormatException e) { JOptionPane.showMessageDialog(this,"Invalid number"); return; }
-
-        if (qty < 1 || qty > soldQty) {
-            JOptionPane.showMessageDialog(this,"Quantity must be between 1 and " + soldQty);
+        catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid number");
             return;
         }
 
-        tblBillItems.setValueAt(qty, selectedRow, 5);
+        if (qty < 1 || qty > soldQty) {
+            JOptionPane.showMessageDialog(this,
+                    "Quantity must be between 1 and " + soldQty);
+            return;
+        }
+
+        // write ONLY to Qty to Refund
+        tblBillItems.setValueAt(qty, selectedRow, 6);
     }
 
     private void processRefund() {
@@ -302,19 +256,19 @@ public class RefundPanel extends JPanel {
 
         int billId = Integer.parseInt(tblBills.getValueAt(billRow, 0).toString());
         String refundReason = txtRefundReason.getText().trim();
-        if(refundReason.isEmpty()){
+        if (refundReason.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Enter refund reason.");
             return;
         }
 
         boolean anyRefund = false;
         for (int i = 0; i < tblBillItems.getRowCount(); i++) {
-            int refundQty = (int) tblBillItems.getValueAt(i, 5);
+            int refundQty = (int) tblBillItems.getValueAt(i, 6);
             if (refundQty > 0) { anyRefund = true; break; }
         }
 
-        if(!anyRefund){
-            JOptionPane.showMessageDialog(this,"No quantity selected for refund.");
+        if (!anyRefund) {
+            JOptionPane.showMessageDialog(this, "No quantity selected for refund.");
             return;
         }
 
@@ -326,69 +280,137 @@ public class RefundPanel extends JPanel {
         refund.setReason(refundReason);
 
         double totalRefundAmount = 0;
+
         for (int i = 0; i < tblBillItems.getRowCount(); i++) {
-            int stockId = (int) tblBillItems.getValueAt(i, 0);
-            int refundQty = (int) tblBillItems.getValueAt(i, 5);
+            int refundQty = (int) tblBillItems.getValueAt(i, 6);
             if (refundQty <= 0) continue;
 
-            BillDetails bd = null;
-            for(BillDetails b: currentBillItems){
-                Integer sid = b.getStockId();
-                if(sid != null && sid == stockId){ bd = b; break; }
-            }
-            if(bd == null) continue;
-
-            double amountPerUnit = bd.getTotalAmount().doubleValue() / bd.getQuantity();
-            totalRefundAmount += refundQty * amountPerUnit;
+            BillDetails bd = currentBillItems.get(i);
+            // 🔧 FIXED: calculate correct per-unit price considering previous refunds
+            int previouslyRefundedQty = refundDAO.getRefundedQuantity(billId, bd.getStockId());
+            double unitPrice = bd.getTotalAmount().doubleValue() / (bd.getQuantity() + previouslyRefundedQty);
+            totalRefundAmount += refundQty * unitPrice;
         }
+
         refund.setAmount(totalRefundAmount);
 
         int refundId = refundDAO.insert(refund);
-        if(refundId <= 0){
-            JOptionPane.showMessageDialog(this,"Failed to create refund record.");
+        if (refundId <= 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to create refund record.");
             return;
         }
 
         for (int i = 0; i < tblBillItems.getRowCount(); i++) {
-            int stockId = (int) tblBillItems.getValueAt(i, 0);
-            int refundQty = (int) tblBillItems.getValueAt(i, 5);
-            if(refundQty <= 0) continue;
+            int refundQty = (int) tblBillItems.getValueAt(i, 6);
+            if (refundQty <= 0) continue;
 
-            BillDetails bd = null;
-            for(BillDetails b: currentBillItems){
-                Integer sid = b.getStockId();
-                if(sid != null && sid == stockId){ bd = b; break; }
-            }
-            if(bd == null) continue;
+            BillDetails bd = currentBillItems.get(i);
+            int previouslyRefundedQty = refundDAO.getRefundedQuantity(billId, bd.getStockId());
+            double unitPrice = bd.getTotalAmount().doubleValue() / (bd.getQuantity() + previouslyRefundedQty);
+            double refundAmount = refundQty * unitPrice;
 
-            double amountPerUnit = bd.getTotalAmount().doubleValue() / bd.getQuantity();
-            double refundAmount = refundQty * amountPerUnit;
+            refundDAO.insertRefundDetail(
+                    refundId, bd.getStockId(), refundQty, refundAmount);
 
-            refundDAO.insertRefundDetail(refundId, stockId, refundQty, refundAmount);
-
-            stockDAO.increaseStockQuantity(stockId, refundQty);
+            stockDAO.increaseStockQuantity(
+                    bd.getStockId(), refundQty);
 
             bd.setQuantity(bd.getQuantity() - refundQty);
             billDetailsDAO.updateBillDetailQuantity(bd);
         }
 
-        // ✅ Adjust payment amount after refund
         PaymentDAO paymentDAO = new PaymentDAO();
-        Integer paymentId = paymentDAO.getPaymentIdByBillId(billId);
-        if(paymentId != null){
-            paymentDAO.adjustPaymentAmount(paymentId, BigDecimal.valueOf(totalRefundAmount), currentUser);
+        Integer paymentId =
+                paymentDAO.getPaymentIdByBillId(billId);
+        if (paymentId != null) {
+            paymentDAO.adjustPaymentAmount(
+                    paymentId,
+                    BigDecimal.valueOf(totalRefundAmount),
+                    currentUser
+            );
         }
 
         boolean allRefunded = currentBillItems.stream()
                 .allMatch(bd -> bd.getQuantity() == 0);
-        String newStatus = allRefunded ? "Refunded" : "Partially Refunded";
-        billingDAO.updateBillStatus(billId, newStatus);
+        billingDAO.updateBillStatus(
+                billId,
+                allRefunded ? "Refunded" : "Partially Refunded"
+        );
 
-        JOptionPane.showMessageDialog(this,"Refund processed successfully.");
+        JOptionPane.showMessageDialog(this,
+                "Refund processed successfully.");
 
         txtRefundReason.setText("");
         loadSelectedBillItems();
         loadRefundDetails();
         refreshBillTable();
+    }
+
+    private void stylePrimaryButton(JButton btn){
+        btn.setBackground(buttonColor);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBorder(BorderFactory.createLineBorder(buttonColor, 2));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(buttonHover); }
+            public void mouseExited(MouseEvent e) { btn.setBackground(buttonColor); }
+        });
+    }
+
+    private void styleBackButton(JButton btn){
+        btn.setBackground(backButtonColor);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setFont(buttonFontLarge);
+        btn.setBorder(BorderFactory.createLineBorder(backButtonColor, 2));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(backButtonhover); }
+            public void mouseExited(MouseEvent e) { btn.setBackground(backButtonColor); }
+        });
+    }
+
+    private void styleTable(JTable table){
+        table.setFont(inputFont);
+        table.setRowHeight(35);
+        table.setSelectionBackground(tableSelection);
+        table.setGridColor(new Color(230, 230, 230));
+        table.setShowVerticalLines(false);
+        table.setFillsViewportHeight(true);
+        table.setIntercellSpacing(new Dimension(0, 0));
+
+        JTableHeader header = table.getTableHeader();
+        header.setFont(headerFont);
+        header.setBackground(tableHeaderBackground);
+        header.setForeground(tableHeaderForeground);
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+        ((DefaultTableCellRenderer)header.getDefaultRenderer())
+                .setHorizontalAlignment(SwingConstants.CENTER);
+
+        table.setDefaultRenderer(Object.class,
+                new DefaultTableCellRenderer() {
+                    @Override
+                    public Component getTableCellRendererComponent(
+                            JTable table, Object value,
+                            boolean isSelected, boolean hasFocus,
+                            int row, int column) {
+
+                        Component c = super.getTableCellRendererComponent(
+                                table, value, isSelected,
+                                hasFocus, row, column);
+
+                        setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+                        if (!isSelected)
+                            c.setBackground(row % 2 == 0
+                                    ? new Color(250,250,250)
+                                    : formBackground);
+                        setHorizontalAlignment(JLabel.CENTER);
+                        return c;
+                    }
+                });
     }
 }

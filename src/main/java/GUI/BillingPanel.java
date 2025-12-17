@@ -244,7 +244,12 @@ public class BillingPanel extends JPanel {
         btnAddItem.addActionListener(e -> addItem());
         btnClearItems.addActionListener(e -> clearCurrentBillItems());
         btnSaveBill.addActionListener(e -> saveBillWithQuantityCheck());
-        btnRefreshItems.addActionListener(e -> loadItems());
+
+        btnRefreshItems.addActionListener(e -> {
+            loadItems();       // Refresh items combobox
+            loadCustomers();   // Refresh customers combobox
+        });
+
         btnBack.addActionListener(e -> {
             Container topFrame = SwingUtilities.getWindowAncestor(this);
             if (topFrame instanceof MainFrame) {
