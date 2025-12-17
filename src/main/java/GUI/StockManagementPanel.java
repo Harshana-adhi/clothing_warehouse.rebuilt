@@ -88,7 +88,13 @@ public class StockManagementPanel extends JPanel {
         btnRestock.addActionListener(e -> showRestockDialog());
         btnDeleteItem.addActionListener(e -> deleteItem());
         btnClear.addActionListener(e -> clearForm());
-        btnRefresh.addActionListener(e -> loadStockData());
+
+        // FIX: Update Refresh button to reload Suppliers list as well
+        btnRefresh.addActionListener(e -> {
+            loadSuppliers();
+            loadStockData();
+        });
+
         btnSearch.addActionListener(e -> searchStock());
         btnViewSupplier.addActionListener(e -> viewSupplierDetails());
 
@@ -388,9 +394,6 @@ public class StockManagementPanel extends JPanel {
             txtMaterial.requestFocus();
             return;
         }
-
-        // Material is treated as a descriptive name, using isValidName strictly might be too restrictive for materials (e.g., Nylon/Spandex Blend). We will use a basic emptiness check.
-        // If you intended Material to be strictly A-Z only, use ValidationUtil.isValidName(material). For now, we only check emptiness.
 
         if (!validatePrice(costStr, "Cost Price")) {
             txtCostPrice.requestFocus();

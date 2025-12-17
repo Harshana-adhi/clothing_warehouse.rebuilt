@@ -27,7 +27,23 @@ public class ValidationUtil {
     public static boolean isValidSriLankanMobile(String mobile) {
         if (mobile == null) return false;
 
-        String regex = "^(07\\d{8}|7\\d{8}|\\+947\\d{8})$";
+        String regex =
+                "^(" +
+                        //mobiles
+                        "(07\\d{8}|7\\d{8}|\\+947\\d{8})" +
+
+                        "|" +
+
+                        //landlines
+                        "(" +
+                        "(0?(11|33|31|34|38|81|54|91|21|37|25|55|45|26|65|63|" +
+                        "47|41|66|35|52|23|24|27|32|57|36))\\d{7}" +
+                        "|" +
+                        "(\\+94(11|33|31|34|38|81|54|91|21|37|25|55|45|26|65|63|" +
+                        "47|41|66|35|52|23|24|27|32|57|36))\\d{7}" +
+                        ")" +
+                        ")$";
+
         return Pattern.matches(regex, mobile.trim());
     }
 

@@ -7,7 +7,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.border.Border; // CORRECTED: Import Border Interface
+import javax.swing.border.Border;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -159,17 +159,17 @@ public class BillingPanel extends JPanel {
                 new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Unit Price", "Total"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make tblItems read-only
+                return false;
             }
         };
         tblItems = new JTable(tableModel);
         JScrollPane currentBillScroll = new JScrollPane(tblItems);
 
         billTableModel = new DefaultTableModel(
-                new String[]{"Bill ID", "Customer", "Date", "Amount", "Description"}, 0) {
+                new String[]{"Bill ID", "Customer", "Date", "Amount", "Description", "Payment ID"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make tblBills read-only
+                return false;
             }
         };
         tblBills = new JTable(billTableModel);
@@ -185,18 +185,14 @@ public class BillingPanel extends JPanel {
                 new String[]{"StockId", "Cloth", "Category", "Color", "Size", "Qty", "Unit Price", "Total"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make tblBillDetails read-only
+                return false;
             }
         };
         tblBillDetails = new JTable(billDetailsTableModel);
         JScrollPane billDetailsScroll = new JScrollPane(tblBillDetails);
 
-        // ================== MODIFICATION START: TABLE STYLING/PADDING ==================
-
-        // Define a custom renderer for padding
         DefaultTableCellRenderer paddingRenderer = new DefaultTableCellRenderer() {
-            // Note: Border is now correctly imported.
-            private final Border cellPadding = BorderFactory.createEmptyBorder(5, 5, 5, 5); // 5px padding
+            private final Border cellPadding = BorderFactory.createEmptyBorder(5, 5, 5, 5);
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
                                                            boolean isSelected, boolean hasFocus,
@@ -206,24 +202,15 @@ public class BillingPanel extends JPanel {
                 return this;
             }
         };
-
-        // Apply the renderer to all tables
         applyCustomRenderer(tblItems, paddingRenderer);
         applyCustomRenderer(tblBills, paddingRenderer);
         applyCustomRenderer(tblBillDetails, paddingRenderer);
-
-        // Increase table row height slightly for better visual effect with padding
         tblItems.setRowHeight(tblItems.getRowHeight() + 8);
         tblBills.setRowHeight(tblBills.getRowHeight() + 8);
         tblBillDetails.setRowHeight(tblBillDetails.getRowHeight() + 8);
-
-        // Optional: Style header for better consistency
         tblItems.getTableHeader().setFont(tblItems.getTableHeader().getFont().deriveFont(Font.BOLD));
         tblBills.getTableHeader().setFont(tblBills.getTableHeader().getFont().deriveFont(Font.BOLD));
         tblBillDetails.getTableHeader().setFont(tblBillDetails.getTableHeader().getFont().deriveFont(Font.BOLD));
-
-        // ================== MODIFICATION END ==================
-
 
         JPanel detailsContainer = new JPanel(new BorderLayout());
         detailsContainer.add(billItemsLabel, BorderLayout.NORTH);
@@ -254,19 +241,16 @@ public class BillingPanel extends JPanel {
 
         add(mainHorizontalSplit, BorderLayout.CENTER);
 
-        // ================== EVENT LISTENERS ==================
         btnAddItem.addActionListener(e -> addItem());
         btnClearItems.addActionListener(e -> clearCurrentBillItems());
         btnSaveBill.addActionListener(e -> saveBillWithQuantityCheck());
         btnRefreshItems.addActionListener(e -> loadItems());
-
         btnBack.addActionListener(e -> {
             Container topFrame = SwingUtilities.getWindowAncestor(this);
             if (topFrame instanceof MainFrame) {
                 ((MainFrame) topFrame).switchPanel("Dashboard");
             }
         });
-
         tblBills.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) loadSelectedBillDetails();
         });
@@ -274,168 +258,29 @@ public class BillingPanel extends JPanel {
         refreshBillTable();
     }
 
-    // ================== NEW HELPER METHOD FOR STYLING ==================
     private void applyCustomRenderer(JTable table, DefaultTableCellRenderer renderer) {
         for (int i = 0; i < table.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setCellRenderer(renderer);
         }
     }
 
-    // ================== NEW SAVE BILL WITH QUANTITY CHECK ==================
-    private void saveBillWithQuantityCheck() {
-        // Check if any bill item exceeds stock quantity
-        for (BillDetails bd : billItems) {
-            Object[] stockInfo = stockDAO.getStockInfoByStockId(bd.getStockId());
-            if(stockInfo != null && stockInfo.length > 5){
-                int availableQty = ((Integer) stockInfo[5]);
-                if(bd.getQuantity() > availableQty){
-                    JOptionPane.showMessageDialog(this,
-                            "Quantity for Stock ID " + bd.getStockId() + " exceeds available stock (" + availableQty + ").",
-                            "Stock Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            }
+    private void refreshBillTable() {
+        billTableModel.setRowCount(0);
+        for (Billing b : billingDAO.getAll()) {
+            billTableModel.addRow(new Object[]{
+                    " " + b.getBillId(),
+                    " " + b.getCustomerId(),
+                    " " + b.getBillDate(),
+                    " " + b.getAmount(),
+                    b.getBillDescription() != null ? b.getBillDescription() : "",
+                    b.getPaymentId() != null ? b.getPaymentId() : ""
+            });
         }
-        // If all quantities valid, proceed to save
-        saveBill();
-    }
-
-    private void styleGreenButton(JButton btn){
-        btn.setBackground(new Color(0, 150, 136));
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-    }
-
-    private void styleRedButton(JButton btn){
-        btn.setBackground(new Color(220, 50, 50));
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-    }
-
-    // ================== EXISTING METHODS (NO CHANGES) ==================
-    private void loadItems() {
-        stockList = stockDAO.getAllStockForBilling();
-        cmbItem.removeAllItems();
-        for (Object[] s : stockList) {
-            Object categoryObj = s.length > 6 ? s[6] : "-";
-            String category = categoryObj != null ? categoryObj.toString() : "-";
-
-            cmbItem.addItem("Stock " + s[0] + " | " + s[1] + " | " + category +
-                    " | " + s[2] + " | Size: " + s[3] + " | Rs." + s[5]);
-        }
-    }
-
-    private void loadCustomers() {
-        customerList = new CustomerDAO().getAll();
-        cmbCustomer.removeAllItems();
-        for (Customer c : customerList) {
-            cmbCustomer.addItem(c.getCustomerId() + " - " + c.getCusName());
-        }
-    }
-
-    private void addItem() {
-        int sel = cmbItem.getSelectedIndex();
-        if (sel < 0) return;
-
-        Object[] stock = stockList.get(sel);
-        int stockId = (int) stock[0];
-        String clothId = (String) stock[1];
-        String category = stock.length > 6 ? stock[6].toString() : "-";
-        String color = (String) stock[2];
-        String size = (String) stock[3];
-        BigDecimal price = (BigDecimal) stock[5];
-        int availableQty = (int) stock[4]; // Quantity from stock list
-
-        int qty;
-        try {
-            qty = Integer.parseInt(txtQuantity.getText());
-            if (qty <= 0) throw new Exception();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Invalid quantity");
-            return;
-        }
-
-        // ===================== CHECK QUANTITY AGAINST STOCK =====================
-        if (qty > availableQty) {
-            JOptionPane.showMessageDialog(this,
-                    "Selected quantity not available | Available quantity: " + availableQty,
-                    "Stock Warning", JOptionPane.WARNING_MESSAGE);
-            return; // Do NOT add the item to the bill
-        }
-
-        BigDecimal total = price.multiply(BigDecimal.valueOf(qty));
-
-        tableModel.addRow(new Object[]{stockId, clothId, category, color, size, qty, price, total});
-
-        BillDetails bd = new BillDetails();
-        bd.setStockId(stockId);
-        bd.setQuantity(qty);
-        bd.setTotalAmount(total);
-        billItems.add(bd);
-
-        txtQuantity.setText("");
-    }
-
-
-    private void clearCurrentBillItems() {
-        if (tableModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "The current bill is already empty.");
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Are you sure you want to clear all items from the current bill?",
-                "Confirm Clear",
-                JOptionPane.YES_NO_OPTION
-        );
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            tableModel.setRowCount(0);
-            billItems.clear();
-            JOptionPane.showMessageDialog(this, "Current bill items cleared.");
-        }
-    }
-
-    private void saveBill() {
-        int cSel = cmbCustomer.getSelectedIndex();
-        if (cSel < 0) return;
-
-        Customer selectedCustomer = customerList.get(cSel);
-        String customerId = selectedCustomer.getCustomerId();
-        String customerName = selectedCustomer.getCusName();
-
-        String employeeId = txtEmployeeId.getText().trim();
-        if (employeeId.isEmpty()) return;
-
-        String paymentType = (String) cmbPaymentType.getSelectedItem();
-
-        Billing bill = new Billing();
-        bill.setBillDate(java.sql.Date.valueOf(LocalDate.now()));
-
-        String desc = txtBillDescription.getText().trim();
-        bill.setBillDescription(desc.isEmpty() ? null : desc);
-        bill.setCustomerId(customerId);
-
-        // Pass paymentType to DAO
-        Integer billId = billingDAO.insertWithPaymentAndDetails(
-                bill, billItems, currentUser, employeeId, paymentType);
-
-        if (billId == null) return;
-
-        generateProfessionalPDF(billId, customerId, customerName, employeeId, desc, paymentType);
-
-        tableModel.setRowCount(0);
-        billItems.clear();
-        txtEmployeeId.setText("");
-        txtBillDescription.setText("");
-        cmbPaymentType.setSelectedIndex(0);
-        refreshBillTable();
-        loadItems();
     }
 
     private void generateProfessionalPDF(int billId, String customerId, String customerName, String employeeId, String description, String paymentType) {
         try {
+            Billing bill = billingDAO.getById(billId); // Get payment ID
             Document doc = new Document();
             PdfWriter.getInstance(doc, new FileOutputStream("Bill_" + billId + ".pdf"));
             doc.open();
@@ -448,6 +293,7 @@ public class BillingPanel extends JPanel {
             doc.add(new Paragraph("Customer Name: " + customerName));
             doc.add(new Paragraph("Employee: " + employeeId));
             doc.add(new Paragraph("Payment Type: " + paymentType));
+            doc.add(new Paragraph("Payment ID: " + (bill.getPaymentId() != null ? bill.getPaymentId() : "")));
             if(description != null) doc.add(new Paragraph("Description: " + description));
             doc.add(new Paragraph("Date: " + LocalDate.now()));
             doc.add(new Paragraph(" "));
@@ -486,35 +332,179 @@ public class BillingPanel extends JPanel {
         }
     }
 
-    private void refreshBillTable() {
-        billTableModel.setRowCount(0);
-        for (Billing b : billingDAO.getAll()) {
-            billTableModel.addRow(new Object[]{
-                    " " + b.getBillId(),
-                    " " + b.getCustomerId(),
-                    " " + b.getBillDate(),
-                    " " + b.getAmount(),
-                    b.getBillDescription() != null ? b.getBillDescription() : ""
+    private void loadItems() {
+        stockList = stockDAO.getAllStockForBilling();
+        cmbItem.removeAllItems();
+        for (Object[] s : stockList) {
+            Object categoryObj = s.length > 6 ? s[6] : "-";
+            String category = categoryObj != null ? categoryObj.toString() : "-";
+
+            cmbItem.addItem("Stock " + s[0] + " | " + s[1] + " | " + category +
+                    " | " + s[2] + " | Size: " + s[3] + " | Rs." + s[5]);
+        }
+    }
+
+    private void loadCustomers() {
+        customerList = new CustomerDAO().getAll();
+        cmbCustomer.removeAllItems();
+        for (Customer c : customerList) {
+            cmbCustomer.addItem(c.getCustomerId() + " - " + c.getCusName());
+        }
+    }
+
+    private void addItem() {
+        int sel = cmbItem.getSelectedIndex();
+        if (sel < 0) return;
+
+        Object[] stock = stockList.get(sel);
+        int stockId = (int) stock[0];
+        String clothId = (String) stock[1];
+        String category = stock.length > 6 ? stock[6].toString() : "-";
+        String color = (String) stock[2];
+        String size = (String) stock[3];
+        BigDecimal price = (BigDecimal) stock[5];
+        int availableQty = (int) stock[4];
+
+        int qty;
+        try {
+            qty = Integer.parseInt(txtQuantity.getText());
+            if (qty <= 0) throw new Exception();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Invalid quantity");
+            return;
+        }
+
+        // ==== FIXED: Check cumulative quantity already in billItems ====
+        int alreadyAddedQty = billItems.stream()
+                .filter(b -> b.getStockId() == stockId)
+                .mapToInt(BillDetails::getQuantity)
+                .sum();
+
+        if (qty + alreadyAddedQty > availableQty) {
+            JOptionPane.showMessageDialog(this,
+                    "Selected quantity not available | Available quantity: " + availableQty +
+                            " | Already added: " + alreadyAddedQty,
+                    "Stock Warning", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        BigDecimal total = price.multiply(BigDecimal.valueOf(qty));
+
+        tableModel.addRow(new Object[]{stockId, clothId, category, color, size, qty, price, total});
+
+        BillDetails bd = new BillDetails();
+        bd.setStockId(stockId);
+        bd.setQuantity(qty);
+        bd.setTotalAmount(total);
+        billItems.add(bd);
+
+        txtQuantity.setText("");
+    }
+
+    private void clearCurrentBillItems() {
+        if (tableModel.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "The current bill is already empty.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to clear all items from the current bill?",
+                "Confirm Clear",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            tableModel.setRowCount(0);
+            billItems.clear();
+            JOptionPane.showMessageDialog(this, "Current bill items cleared.");
+        }
+    }
+
+    private void saveBillWithQuantityCheck() {
+        for (BillDetails bd : billItems) {
+            Object[] stockInfo = stockDAO.getStockInfoByStockId(bd.getStockId());
+            if(stockInfo != null && stockInfo.length > 5){
+                int availableQty = ((Integer) stockInfo[5]);
+                if(bd.getQuantity() > availableQty){
+                    JOptionPane.showMessageDialog(this,
+                            "Quantity for Stock ID " + bd.getStockId() + " exceeds available stock (" + availableQty + ").",
+                            "Stock Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+        }
+        saveBill();
+    }
+
+    private void saveBill() {
+        int cSel = cmbCustomer.getSelectedIndex();
+        if (cSel < 0) return;
+
+        Customer selectedCustomer = customerList.get(cSel);
+        String customerId = selectedCustomer.getCustomerId();
+        String customerName = selectedCustomer.getCusName();
+
+        String employeeId = txtEmployeeId.getText().trim();
+        if (employeeId.isEmpty()) return;
+
+        String paymentType = (String) cmbPaymentType.getSelectedItem();
+        String desc = txtBillDescription.getText().trim();
+
+        Billing bill = new Billing();
+        bill.setBillDate(java.sql.Date.valueOf(LocalDate.now()));
+        bill.setCustomerId(customerId);
+        bill.setBillDescription(desc.isEmpty() ? null : desc);
+
+        Integer billId = billingDAO.insertWithPaymentAndDetails(
+                bill, billItems, currentUser, employeeId, paymentType);
+
+        if (billId == null) return;
+
+        generateProfessionalPDF(billId, customerId, customerName, employeeId, desc, paymentType);
+
+        tableModel.setRowCount(0);
+        billItems.clear();
+        txtEmployeeId.setText("");
+        txtBillDescription.setText("");
+        cmbPaymentType.setSelectedIndex(0);
+        refreshBillTable();
+        loadItems();
+    }
+
+    private void loadSelectedBillDetails() {
+        int sel = tblBills.getSelectedRow();
+        if (sel < 0) return;
+
+        int billId = Integer.parseInt(tblBills.getValueAt(sel, 0).toString().trim());
+        billDetailsTableModel.setRowCount(0);
+        List<BillDetails> details = billDetailsDAO.getByBillId(billId);
+        for (BillDetails bd : details) {
+            Object[] stock = stockDAO.getStockInfoByStockId(bd.getStockId());
+            String category = stock.length > 4 && stock[4] != null ? stock[4].toString() : "-";
+
+            billDetailsTableModel.addRow(new Object[]{
+                    bd.getStockId(),
+                    stock[0],
+                    category,
+                    stock[1],
+                    stock[2],
+                    bd.getQuantity(),
+                    stock[3],
+                    bd.getTotalAmount()
             });
         }
     }
 
-    private void loadSelectedBillDetails() {
-        int row = tblBills.getSelectedRow();
-        if (row < 0) return;
+    private void styleGreenButton(JButton button) {
+        button.setBackground(new Color(0, 150, 136));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+    }
 
-        int billId = Integer.parseInt(tblBills.getValueAt(row, 0).toString().trim());
-        List<BillDetails> list = billDetailsDAO.getByBillId(billId);
-        billDetailsTableModel.setRowCount(0);
-
-        for (BillDetails bd : list) {
-            Object[] info = stockDAO.getStockInfoByStockId(bd.getStockId());
-            String category = info.length > 4 && info[4] != null ? info[4].toString() : "-";
-            BigDecimal unitPrice = (BigDecimal) info[3];
-
-            billDetailsTableModel.addRow(new Object[]{
-                    bd.getStockId(), info[0], category, info[1], info[2], bd.getQuantity(), unitPrice, bd.getTotalAmount()
-            });
-        }
+    private void styleRedButton(JButton button) {
+        button.setBackground(new Color(255, 70, 100));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
     }
 }

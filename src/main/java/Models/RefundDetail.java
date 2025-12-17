@@ -62,7 +62,7 @@ public class RefundDetail {
         this.amount = amount;
     }
 
-    // Helper for tables
+    // utility method for creating Jtable
     public String[] toValuesArray() {
         return new String[]{
                 String.valueOf(refundDetailId),

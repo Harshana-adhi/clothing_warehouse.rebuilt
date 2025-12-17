@@ -70,7 +70,7 @@ public class Refund {
     public void setBillId(int billId) {
         this.billId = billId;}
 
-    // Helper for tables
+    // utility method for table
     public String[] toValuesArray() {
         return new String[]{
                 String.valueOf(refundId),

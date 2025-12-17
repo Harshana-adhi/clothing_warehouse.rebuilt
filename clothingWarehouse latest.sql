@@ -74,11 +74,6 @@ CREATE TABLE BillDetails (
     FOREIGN KEY (StockId) REFERENCES ClothingStock(StockId) ON DELETE SET NULL
 );
 
-CREATE TABLE Invoice (
-InvoiceId INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-issueDate date  not null,
-BillId INT, FOREIGN KEY (BillId) references Billing (BillId) ON DELETE SET NULL
-);
 
 CREATE TABLE Refund ( 
 RefundId INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -89,6 +84,17 @@ RefundMethod varchar(15),
 CustomerId varchar(20), FOREIGN KEY (CustomerId) references Customer(CustomerId) ON DELETE SET NULL,
 BillId INT, FOREIGN KEY (BillId) references Billing(BillId) ON DELETE SET NULL
 );
+
+CREATE TABLE RefundDetails (
+    RefundDetailId INT AUTO_INCREMENT PRIMARY KEY,
+    RefundId INT NOT NULL,
+    StockId INT,
+    Quantity INT NOT NULL,
+    Amount DECIMAL(8,2),
+    FOREIGN KEY (RefundId) REFERENCES Refund(RefundId) ON DELETE CASCADE,
+    FOREIGN KEY (StockId) REFERENCES ClothingStock(StockId) ON DELETE SET NULL
+);
+
 
 CREATE TABLE Users (
     UserId INT AUTO_INCREMENT PRIMARY KEY,

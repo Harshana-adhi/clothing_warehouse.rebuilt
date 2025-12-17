@@ -30,7 +30,7 @@ public class Customer {
     public String getTelNo() { return telNo; }
     public void setTelNo(String telNo) { this.telNo = telNo; }
 
-    // Helper to convert to String array (for table models etc.)
+    // utility method for creating Jtable
     public String[] toValuesArray() {
         return new String[]{customerId, cusName, address, telNo};
     }

@@ -12,7 +12,7 @@ public class BillDetails {
     //  Default constructor
     public BillDetails() {}
 
-    // Full constructor (for fetching from DB)
+    // Full constructor
     public BillDetails(int billDetailId, int billId, Integer stockId, int quantity, BigDecimal totalAmount) {
         this.billDetailId = billDetailId;
         this.billId = billId;
@@ -21,7 +21,7 @@ public class BillDetails {
         this.totalAmount = totalAmount;
     }
 
-    // Constructor for creating new entries (stockId may be null)
+    // Constructor for creating new entries (constructor with null stockID)(polymorphism)
     public BillDetails(int billId, Integer stockId, int quantity, BigDecimal totalAmount) {
         this.billId = billId;
         this.stockId = stockId;

@@ -199,7 +199,7 @@ public class BillingDAO {
 
     public List<Billing> getAll(){
         List<Billing> list = new ArrayList<>();
-        String sql = "SELECT BillId, BillDate, Amount, BillDescription, BillStatus, PaymentId, CustomerId FROM Billing ORDER BY BillDate DESC";
+        String sql = "SELECT BillId, BillDate, Amount, BillDescription, BillStatus, PaymentId, CustomerId FROM Billing ORDER BY BillId DESC,BillDate";
         try(Connection conn = DBConnect.getDBConnection();
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(sql)){

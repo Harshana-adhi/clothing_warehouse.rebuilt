@@ -7,6 +7,7 @@ public class ClothingStock {
     private String size;
     private int quantity;
 
+    //default constructor
     public ClothingStock() {}
 
     // Full Constructor (Used when retrieving data from DB)
@@ -33,7 +34,6 @@ public class ClothingStock {
     public String getClothId() { return clothId; }
     public void setClothId(String clothId) { this.clothId = clothId; }
 
-    // ⭐ NEW Getter/Setter for Color
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
 

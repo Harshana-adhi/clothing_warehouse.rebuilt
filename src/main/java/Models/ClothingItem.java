@@ -6,9 +6,12 @@ public class ClothingItem {
     private String clothId;
     private String material;
     private String category;
-    private BigDecimal costPrice;    // New field
-    private BigDecimal retailPrice;  // New field
+    private BigDecimal costPrice;
+    private BigDecimal retailPrice;
     private String supplierId;
+
+    //default constructor
+    public ClothingItem() {}
 
     // Constructor
     public ClothingItem(String clothId, String material, String category, BigDecimal costPrice, BigDecimal retailPrice, String supplierId) {
@@ -20,7 +23,6 @@ public class ClothingItem {
         this.supplierId = supplierId;
     }
 
-    public ClothingItem() {}
 
     // Getters and Setters
     public String getClothId() { return clothId; }
@@ -41,7 +43,7 @@ public class ClothingItem {
     public String getSupplierId() { return supplierId; }
     public void setSupplierId(String supplierId) { this.supplierId = supplierId; }
 
-    // Utility method for JTable conversion
+    // Utility method for creating JTable
     public String[] toValuesArray() {
         return new String[]{clothId, material, category,
                 costPrice.toString(), retailPrice.toString(), supplierId};

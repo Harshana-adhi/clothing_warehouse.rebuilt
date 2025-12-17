@@ -35,7 +35,7 @@ public class Employee {
     public String getEmpPosition() { return empPosition; }
     public void setEmpPosition(String empPosition) { this.empPosition = empPosition; }
 
-    // Helper to convert to String array (for table models etc.)
+    //utility method for creating Jtable
     public String[] toValuesArray() {
         return new String[]{employeeId, empName, tellNo, String.valueOf(salary), empPosition};
     }
