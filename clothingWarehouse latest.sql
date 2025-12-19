@@ -67,7 +67,7 @@ CustomerId VARCHAR(20) ,FOREIGN KEY (CustomerId) REFERENCES Customer(CustomerId)
 CREATE TABLE BillDetails (
     BillDetailId INT AUTO_INCREMENT PRIMARY KEY,
     BillId INT NOT NULL, 
-    StockId INT, -- Changed from ClothId to StockId to know WHICH size was sold
+    StockId INT,
     Quantity INT NOT NULL,
     TotalAmount DECIMAL(8,2) NOT NULL,
     FOREIGN KEY (BillId) REFERENCES Billing(BillId) ON DELETE CASCADE,

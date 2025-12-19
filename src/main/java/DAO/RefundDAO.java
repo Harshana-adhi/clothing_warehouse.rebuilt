@@ -9,7 +9,6 @@ import java.util.List;
 
 public class RefundDAO {
 
-    // ================= EXISTING METHODS =================
 
     // Insert a new refund and return generated RefundId
     public int insert(Refund refund) {
@@ -96,7 +95,6 @@ public class RefundDAO {
         return total;
     }
 
-    // ================= NEW METHODS FOR REFUND DETAILS =================
 
     // Insert a refund item into RefundDetails
     public boolean insertRefundDetail(int refundId, int stockId, int quantity, double amount) {

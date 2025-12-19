@@ -10,7 +10,7 @@ import java.util.List;
 
 public class EmployeeDAO {
 
-    // --- Role-based access ---
+    //  Role-based access
     private boolean hasPermission(User user, String operation, String position) {
         if (user == null) return false;
         String role = user.getRole();
@@ -34,7 +34,7 @@ public class EmployeeDAO {
         }
     }
 
-    // --- CRUD Operations with Role Check ---
+    //  CRUD Operations with Role Check
     public boolean insert(Employee emp, User user) {
         if (emp == null || emp.getEmployeeId().isEmpty() || exists(emp.getEmployeeId())) return false;
 
@@ -94,7 +94,7 @@ public class EmployeeDAO {
         }
     }
 
-    // --- Read Operations ---
+    //  Read Operations
     public Employee getById(String employeeId) {
         String sql = "SELECT * FROM Employee WHERE EmployeeId = ?";
         try (Connection conn = DBConnect.getDBConnection();

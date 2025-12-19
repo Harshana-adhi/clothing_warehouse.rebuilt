@@ -304,7 +304,7 @@ public class EmployeePanel extends JPanel {
         String salaryStr = txtSalary.getText().trim();
         String position = txtPosition.getText().trim();
 
-        // --- START VALIDATION INTEGRATION (ADD) ---
+        //  START VALIDATION INTEGRATION (ADD)
 
         // 1. Check for required fields
         if (id.isEmpty() || name.isEmpty() || phone.isEmpty() || salaryStr.isEmpty() || position.isEmpty()) {
@@ -347,7 +347,7 @@ public class EmployeePanel extends JPanel {
             txtSalary.requestFocus();
             return;
         }
-        // --- END VALIDATION INTEGRATION (ADD) ---
+        //  END VALIDATION INTEGRATION (ADD)
 
         // Business Logic Check (Original logic retained)
         if ("Manager".equalsIgnoreCase(position) && ("Manager".equalsIgnoreCase(currentUser.getRole()) || "Staff".equalsIgnoreCase(currentUser.getRole()))) {
@@ -412,7 +412,7 @@ public class EmployeePanel extends JPanel {
             txtSalary.requestFocus();
             return;
         }
-        // --- END VALIDATION INTEGRATION (UPDATE) ---
+        //  END VALIDATION INTEGRATION (UPDATE)
 
         Employee emp = new Employee(id, name, phone, salary, position);
 

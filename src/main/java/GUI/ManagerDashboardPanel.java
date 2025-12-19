@@ -42,7 +42,7 @@ public class ManagerDashboardPanel extends JPanel {
 
         // ADD buttons in order (4x2 grid)
         buttonPanel.add(btnManageEmployees);
-        buttonPanel.add(btnManageUsers); // ✅ Manage Users button
+        buttonPanel.add(btnManageUsers); //  Manage Users button
         buttonPanel.add(btnStockManagement);
         buttonPanel.add(btnSalesBilling);
         buttonPanel.add(btnRefund);

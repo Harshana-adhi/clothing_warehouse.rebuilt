@@ -96,7 +96,7 @@ public class SupplierDAO {
         return list;
     }
 
-    // ✅ ✅ ✅ NEW METHOD FOR COMBOBOX (SAFE WRAPPER)
+    //  NEW METHOD FOR COMBOBOX (SAFE WRAPPER)
     public List<Supplier> getAllSuppliers() {
         return getAll();   // Uses your existing logic
     }

@@ -21,6 +21,7 @@ public class PaymentDAO {
             case "view":
                 return role.equals("admin") || role.equals("manager") || role.equals("staff");
             case "update":
+                return role.equals("admin") || role.equals("manager") || role.equals("staff");
             case "delete":
                 return role.equals("admin") || role.equals("manager");
             default:
@@ -34,7 +35,7 @@ public class PaymentDAO {
 
         String sql = "INSERT INTO Payment (PayType, Amount, PayDate, EmployeeId, CustomerId) VALUES (?,?,?,?,?)";
         try(Connection conn = DBConnect.getDBConnection();
-            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){ //tells the database we want to retrieve PKs
 
             ps.setString(1, payment.getPayType());
             ps.setBigDecimal(2, payment.getAmount());
@@ -57,6 +58,7 @@ public class PaymentDAO {
         return false;
     }
 
+   /*
     // Create payment and return generated PaymentId
     public Integer createPayment(String payType, BigDecimal amount, User user, String customerId){
         if(user == null || !hasPermission(user, "add")) return null;
@@ -66,6 +68,9 @@ public class PaymentDAO {
         return success ? payment.getPaymentId() : null;
     }
 
+    */
+
+    /*
     // Update payment (only admin/manager)
     public boolean update(Payment payment, User user){
         if(!hasPermission(user, "update") || payment == null) return false;
@@ -88,6 +93,9 @@ public class PaymentDAO {
         return false;
     }
 
+     */
+
+    /*
     // Delete payment (only admin/manager)
     public boolean delete(int paymentId, User user){
         if(!hasPermission(user, "delete")) return false;
@@ -103,8 +111,12 @@ public class PaymentDAO {
         return false;
     }
 
+
+     */
+
+
     // Get payment by ID
-    public Payment getById(int paymentId, User user){
+   /* public Payment getById(int paymentId, User user){
         if(!hasPermission(user, "view")) return null;
 
         String sql = "SELECT PaymentId, PayType, Amount, PayDate, EmployeeId, CustomerId FROM Payment WHERE PaymentId=? ORDER BY PaymentId DESC";
@@ -130,12 +142,14 @@ public class PaymentDAO {
         return null;
     }
 
+    */
+
     // Get all payments
     public List<Payment> getAll(User user){
         List<Payment> list = new ArrayList<>();
         if(!hasPermission(user, "view")) return list;
 
-        String sql = "SELECT PaymentId, PayType, Amount, PayDate, EmployeeId, CustomerId FROM Payment ORDER BY PayDate DESC";
+        String sql = "SELECT PaymentId, PayType, Amount, PayDate, EmployeeId, CustomerId FROM Payment ORDER BY PaymentId DESC,PayDate ";
         try(Connection conn = DBConnect.getDBConnection();
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(sql)){
@@ -158,7 +172,7 @@ public class PaymentDAO {
     }
 
     // Get Payment Method by BillId
-    public String getPaymentMethodByBillId(int billId){
+   /* public String getPaymentMethodByBillId(int billId){
         String sql = "SELECT p.PayType FROM Payment p " +
                 "JOIN Billing b ON p.PaymentId = b.PaymentId " +
                 "WHERE b.BillId=?";
@@ -173,11 +187,13 @@ public class PaymentDAO {
         return null;
     }
 
-    // ===================== NEW METHODS FOR PARTIAL REFUND =====================
+    */
+
+    // NEW METHODS FOR PARTIAL REFUND
 
     // Get PaymentId by BillId
     public Integer getPaymentIdByBillId(int billId){
-        String sql = "SELECT PaymentId FROM Billing WHERE BillId=?";
+        String sql = "SELECT PaymentId FROM Billing WHERE BillId=?"; //
         try(Connection conn = DBConnect.getDBConnection();
             PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setInt(1, billId);
@@ -196,7 +212,7 @@ public class PaymentDAO {
         String sql = "UPDATE Payment SET Amount = Amount - ? WHERE PaymentId=?";
         try(Connection conn = DBConnect.getDBConnection();
             PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.setBigDecimal(1, refundAmount);
+            ps.setBigDecimal(1, refundAmount); //new payment amount = amount - refund amount
             ps.setInt(2, paymentId);
             return ps.executeUpdate() > 0;
         } catch(SQLException e){

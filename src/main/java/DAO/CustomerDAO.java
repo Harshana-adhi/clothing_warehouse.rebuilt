@@ -10,7 +10,7 @@ import java.util.List;
 
 public class CustomerDAO {
 
-    // --- Role-based access ---
+    //  Role-based access
     private boolean hasPermission(User user, String operation) {
         if (user == null) return false;
         String role = user.getRole();
@@ -30,7 +30,7 @@ public class CustomerDAO {
         }
     }
 
-    // --- CRUD Operations with Role Check ---
+    //  CRUD Operations with Role Check
     public boolean insert(Customer customer, User user) {
         if (!hasPermission(user, "ADD")) return false;
         if (customer == null || customer.getCustomerId().isEmpty() || exists(customer.getCustomerId())) return false;
@@ -87,7 +87,7 @@ public class CustomerDAO {
         }
     }
 
-    // --- Read Operations (all roles can access) ---
+    //  Read Operations (all roles can access)
     public Customer getById(String customerId) {
         String sql = "SELECT * FROM Customer WHERE CustomerId = ?";
         try (Connection conn = DBConnect.getDBConnection();
@@ -111,7 +111,7 @@ public class CustomerDAO {
 
     public List<Customer> getAll() {
         List<Customer> list = new ArrayList<>();
-        String sql = "SELECT * FROM Customer";
+        String sql = "SELECT * FROM Customer ORDER BY CustomerId DESC";
         try (Connection conn = DBConnect.getDBConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -155,7 +155,7 @@ public class CustomerDAO {
         return list;
     }
 
-    // --- Check if Customer exists ---
+    //  Check if Customer exists
     public boolean exists(String customerId) {
         String sql = "SELECT COUNT(*) FROM Customer WHERE CustomerId = ?";
         try (Connection conn = DBConnect.getDBConnection();

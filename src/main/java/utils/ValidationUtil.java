@@ -20,9 +20,10 @@ public class ValidationUtil {
     /*
        2. Sri Lankan Mobile Number validation
        Allowed formats:
-       - 0774445345
-       - 763499494
-       - +94763474507
+        0774445345
+        763499494
+        +94763474507
+        district wise land line numbers
     */
     public static boolean isValidSriLankanMobile(String mobile) {
         if (mobile == null) return false;

@@ -58,9 +58,9 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-    // ------------------------------------------------------
+
     // Load dashboard based on role
-    // ------------------------------------------------------
+
     public void loadDashboardByRole(String role, User user) {
         loggedInUser = user; // store current user
         mainPanel.removeAll();
@@ -70,9 +70,9 @@ public class MainFrame extends JFrame {
 
         switch (role.toLowerCase()) {
 
-            // ---------------------------------------------------------
+
             // ADMIN
-            // ---------------------------------------------------------
+
             case "admin":
                 AdminDashboardPanel adminDashboard = new AdminDashboardPanel(this);
                 EmployeePanel adminEmployeePanel = new EmployeePanel(loggedInUser);
@@ -93,9 +93,9 @@ public class MainFrame extends JFrame {
                 statusLabel.setText("Welcome Admin!");
                 break;
 
-            // ---------------------------------------------------------
+
             // MANAGER
-            // ---------------------------------------------------------
+
             case "manager":
                 ManagerDashboardPanel managerDashboard = new ManagerDashboardPanel(this);
                 EmployeePanel managerEmployeePanel = new EmployeePanel(loggedInUser);
@@ -116,9 +116,9 @@ public class MainFrame extends JFrame {
                 statusLabel.setText("Welcome Manager!");
                 break;
 
-            // ---------------------------------------------------------
+
             // STAFF
-            // ---------------------------------------------------------
+
             case "staff":
                 StaffDashboardPanel staffDashboard = new StaffDashboardPanel(this);
                 CustomerPanel staffCustomerPanel = new CustomerPanel(loggedInUser);
@@ -147,9 +147,9 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-    // ------------------------------------------------------
+
     // Switch panel by name
-    // ------------------------------------------------------
+
     public void switchPanel(String panelName) {
         cardLayout.show(mainPanel, panelName);
         statusLabel.setText("You are in " + panelName + " module");

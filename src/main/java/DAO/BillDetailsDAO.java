@@ -32,7 +32,7 @@ public class BillDetailsDAO {
 
         String sql = "INSERT INTO BillDetails (BillId, StockId, Quantity, TotalAmount) VALUES (?,?,?,?)";
         try(Connection conn = DBConnect.getDBConnection();
-            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){ //tells the database we want to retrieve PKs
 
             ps.setInt(1, detail.getBillId());
             if(detail.getStockId() != null) ps.setInt(2, detail.getStockId());
@@ -42,7 +42,7 @@ public class BillDetailsDAO {
 
             int affected = ps.executeUpdate();
             if(affected > 0){
-                try(ResultSet rs = ps.getGeneratedKeys()){
+                try(ResultSet rs = ps.getGeneratedKeys()){ //read the generated IDs(auto incremented ones)
                     if(rs.next()) detail.setBillDetailId(rs.getInt(1));
                 }
                 return true;
@@ -54,9 +54,10 @@ public class BillDetailsDAO {
         return false;
     }
 
+
     // Get all bill details by BillId
     public List<BillDetails> getByBillId(int billId){
-        List<BillDetails> list = new ArrayList<>();
+        List<BillDetails> list = new ArrayList<>(); //list is an interface and arraylist is its implementation
         String sql = "SELECT BillDetailId, BillId, StockId, Quantity, TotalAmount FROM BillDetails WHERE BillId=?";
         try(Connection conn = DBConnect.getDBConnection();
             PreparedStatement ps = conn.prepareStatement(sql)){
@@ -87,14 +88,14 @@ public class BillDetailsDAO {
         try(Connection conn = DBConnect.getDBConnection();
             PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setInt(1, billDetailId);
-            return ps.executeUpdate() > 0;
+            return ps.executeUpdate() > 0;  //If more than 0 rows were deleted, return true (success), otherwise false
         } catch(SQLException e){
             System.out.println("Error deleting BillDetails: " + e.getMessage());
         }
         return false;
     }
 
-    // ================= NEW METHODS FOR REFUND =================
+    // METHODS FOR REFUND
 
     // Get quantity sold for a specific StockId in a particular Bill
     public int getSoldQuantity(int billId, int stockId){
@@ -129,10 +130,12 @@ public class BillDetailsDAO {
     }
 
 
-    // Get all bill items for refund UI
+    // Get all bill items for refund UI(not using now|use getByBillId method instead of this)
     public List<BillDetails> getBillItemsForRefund(int billId){
         // Same as getByBillId, can be expanded later if needed
         return getByBillId(billId);
     }
+
+
 
 }

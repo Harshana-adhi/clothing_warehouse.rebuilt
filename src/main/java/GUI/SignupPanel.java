@@ -249,7 +249,7 @@ public class SignupPanel extends JPanel {
             mainFrame.showLoginPanel();
         } else {
             // This usually means the username already exists in the database
-            JOptionPane.showMessageDialog(this, "Error creating account! The username may already exist or there was a database error.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error creating account! ", "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

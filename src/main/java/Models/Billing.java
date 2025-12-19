@@ -14,7 +14,8 @@ public class Billing {
 
     public Billing() {}
 
-    // Constructor for new bills (ID auto-generated)
+
+   /*
     public Billing(Date billDate, BigDecimal amount, String billDescription, String billStatus, Integer paymentId, String customerId) {
         this.billDate = billDate;
         this.amount = amount;
@@ -23,6 +24,7 @@ public class Billing {
         this.paymentId = paymentId;
         this.customerId = customerId;
     }
+    */
 
     // Full constructor with ID
     public Billing(int billId, Date billDate, BigDecimal amount, String billDescription, String billStatus, Integer paymentId, String customerId) {

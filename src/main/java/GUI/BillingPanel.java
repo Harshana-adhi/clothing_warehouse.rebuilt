@@ -5,32 +5,32 @@ import Models.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableModel; //for creating ui tables
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.*; //fonts/colors/borderlayouts
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDate;  //yyyy-mm-dd
 import java.util.List;
 import java.util.ArrayList;
-import java.io.FileOutputStream;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
+import java.io.FileOutputStream; //write binary data into files
+import com.itextpdf.text.Document; //pdf generation
+import com.itextpdf.text.Font; //fonts
+import com.itextpdf.text.FontFactory;  //easy to make fonts
 import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.PdfPTable; //tables in pdf
+import com.itextpdf.text.pdf.PdfWriter; //write PDF to file
 
 public class BillingPanel extends JPanel {
 
     private User currentUser;
 
-    private JComboBox<String> cmbCustomer, cmbItem, cmbPaymentType;
-    private JTextField txtQuantity, txtEmployeeId, txtBillDescription;
-    private JButton btnAddItem, btnSaveBill, btnRefreshItems, btnBack, btnClearItems;
+    private JComboBox<String> cmbCustomer, cmbItem, cmbPaymentType;  // 3 main comboboxes
+    private JTextField txtQuantity, txtEmployeeId, txtBillDescription;  //textboxes
+    private JButton btnAddItem, btnSaveBill, btnRefreshItems, btnBack, btnClearItems; //5 buttons
 
-    private JTable tblItems;
-    private DefaultTableModel tableModel;
+    private JTable tblItems;  //table showing current selected items for billing
+    private DefaultTableModel tableModel;  //stores the data for table
 
     private JTable tblBills;
     private DefaultTableModel billTableModel;
@@ -38,36 +38,39 @@ public class BillingPanel extends JPanel {
     private JTable tblBillDetails;
     private DefaultTableModel billDetailsTableModel;
 
-    private List<Object[]> stockList;
-    private List<Customer> customerList;
-    private List<BillDetails> billItems;
+    private List<Object[]> stockList;  //Temporarily stores stock data from DB
+    private List<Customer> customerList; //hold customer got from DB
+    private List<BillDetails> billItems;  //hold billdetails got from DB
 
+    //creating DAO objects
     private BillingDAO billingDAO;
     private BillDetailsDAO billDetailsDAO;
     private ClothingStockDAO stockDAO;
 
     private static final int LEFT_PANEL_NOMINAL_WIDTH = 350;
 
+    //constructor for billing panel
     public BillingPanel(User user) {
         this.currentUser = user;
+        //creating nessasary DAO files and objects
         this.billingDAO = new BillingDAO();
         this.billDetailsDAO = new BillDetailsDAO();
         this.stockDAO = new ClothingStockDAO();
         this.billItems = new ArrayList<>();
 
-        setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setLayout(new BorderLayout(10, 10)); //10px horizontal & vertical gaps between components
+        setBorder(new EmptyBorder(10, 10, 10, 10)); //Adds padding around the panel (top, left, bottom, right = 10px each)
         setBackground(Color.WHITE);
 
-        JPanel formPanel = new JPanel(new GridBagLayout());
+        JPanel formPanel = new JPanel(new GridBagLayout()); //subpanel for input layouts
         formPanel.setBackground(Color.WHITE);
         formPanel.setBorder(new TitledBorder("Create Bill"));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 8, 4, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-        gbc.gridwidth = 2;
+        gbc.insets = new Insets(4, 8, 4, 8); //padding around each component (top, left, bottom, right)
+        gbc.fill = GridBagConstraints.HORIZONTAL; //components stretch horizontally
+        gbc.weightx = 1.0; //component can grow horizontally if space available
+        gbc.gridwidth = 2;  //component spans 2 columns
 
         cmbCustomer = new JComboBox<>();
         loadCustomers();

@@ -324,7 +324,7 @@ public class CustomerPanel extends JPanel {
             txtPhone.requestFocus();
             return;
         }
-        // --- END VALIDATION INTEGRATION (ADD) ---
+        // END VALIDATION INTEGRATION (ADD)
 
 
         Customer c = new Customer(id, name, address, phone);
@@ -346,7 +346,7 @@ public class CustomerPanel extends JPanel {
         String address = txtAddress.getText().trim();
         String phone = txtPhone.getText().trim();
 
-        // --- START VALIDATION INTEGRATION (UPDATE) ---
+        //  START VALIDATION INTEGRATION (UPDATE)
         if (name.isEmpty() || address.isEmpty() || phone.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Name, Address, and Phone fields are required!", "Validation Error", JOptionPane.WARNING_MESSAGE);
             return;

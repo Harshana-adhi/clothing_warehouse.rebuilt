@@ -27,25 +27,26 @@ public class BillingDAO {
                 return false;
         }
     }
-
+      //method for updating bill/billdetails/payment
     public Integer insertWithPaymentAndDetails(Billing bill, List<BillDetails> items, User user, String employeeId, String paymentType) {
         if(!hasPermission(user, "add") || bill == null || items == null || items.isEmpty()) return null;
 
         Connection conn = null;
         try {
             conn = DBConnect.getDBConnection();
-            conn.setAutoCommit(false);
+            conn.setAutoCommit(false); //Setting autoCommit = false allows to execute multiple statements as a single transaction.
 
-            // ==================== CHECK STOCK ====================
-            for(BillDetails bd : items){
-                if(bd.getStockId() != null){
-                    String stockCheckSql = "SELECT Quantity FROM ClothingStock WHERE StockId=?";
+            // check current stock
+            for(BillDetails bd : items){ //item is a list of the billdetails objects ,bd is a single object of it
+                if(bd.getStockId() != null){ //Only check stock for items that are linked to the inventory (have a valid StockId).
+
+                    String stockCheckSql = "SELECT Quantity FROM ClothingStock WHERE StockId=?"; //reading availivle qty from stock table
                     try (PreparedStatement psCheck = conn.prepareStatement(stockCheckSql)) {
                         psCheck.setInt(1, bd.getStockId());
                         ResultSet rs = psCheck.executeQuery();
                         if(rs.next()){
-                            int availableQty = rs.getInt("Quantity");
-                            if(bd.getQuantity() > availableQty){
+                            int availableQty = rs.getInt("Quantity"); //availible qty = actual qty read from clothing stock tble
+                            if(bd.getQuantity() > availableQty){                //if needed qty for bill > actual qty
                                 throw new RuntimeException("Insufficient stock for Stock ID: " + bd.getStockId() +
                                         " (requested: " + bd.getQuantity() + ", available: " + availableQty + ")");
                             }
@@ -56,23 +57,25 @@ public class BillingDAO {
                 }
             }
 
-            PaymentDAO paymentDAO = new PaymentDAO();
-            BigDecimal totalAmount = items.stream()
-                    .map(BillDetails::getTotalAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            PaymentDAO paymentDAO = new PaymentDAO();        //create paymentDAO object for access methods in paymentDAO
+            BigDecimal totalAmount = items.stream() //take the list of items and turn it into a stream | allow functional style operations without loops
+                    .map(BillDetails::getTotalAmount) // get total amount of billdetails of one bill
+                    .reduce(BigDecimal.ZERO, BigDecimal::add); //sum all total amounts starting from 0
 
             Payment payment = new Payment(paymentType, totalAmount, new java.util.Date(), employeeId, bill.getCustomerId());
-            if(!paymentDAO.insert(payment, user)){
-                conn.rollback();
+            if(!paymentDAO.insert(payment, user)){ //calls insert method in paymentDAO
+                conn.rollback(); //if inserting payment is not success, then rollback connection for undo all previous insertion(if exits)
                 return null;
             }
-            Integer paymentId = payment.getPaymentId();
+            Integer paymentId = payment.getPaymentId(); //if payment success, then get paymentID of that payment
 
-            bill.setPaymentId(paymentId);
+            bill.setPaymentId(paymentId);   //set that paymentId in bill object
             bill.setAmount(totalAmount);
             bill.setBillDate(new java.util.Date());
             bill.setBillStatus("Paid");
 
+
+            //inserting that date into billing table
             String sqlBill = "INSERT INTO Billing (BillDate, Amount, BillDescription, BillStatus, PaymentId, CustomerId) VALUES (?,?,?,?,?,?)";
             try (PreparedStatement psBill = conn.prepareStatement(sqlBill, Statement.RETURN_GENERATED_KEYS)) {
                 psBill.setDate(1, new java.sql.Date(bill.getBillDate().getTime()));
@@ -83,34 +86,34 @@ public class BillingDAO {
                 psBill.setString(6, bill.getCustomerId());
 
                 if(psBill.executeUpdate() == 0){
-                    conn.rollback();
+                    conn.rollback(); //if inserting fails. rollback connection
                     return null;
                 }
                 try (ResultSet rs = psBill.getGeneratedKeys()) {
-                    if(rs.next()) bill.setBillId(rs.getInt(1));
+                    if(rs.next()) bill.setBillId(rs.getInt(1));  //get auto generated billID and pass it to bill object
                     else {
                         conn.rollback();
                         return null;
                     }
                 }
             }
-
+            //insert data into bill details
             String sqlDetail = "INSERT INTO BillDetails (BillId, StockId, Quantity, TotalAmount) VALUES (?,?,?,?)";
             try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail)) {
-                for(BillDetails item : items){
+                for(BillDetails item : items){ //list <billDetails> is the list of billDetails for one bill ( this is a loop over that list)
                     psDetail.setInt(1, bill.getBillId());
-                    if(item.getStockId() != null) psDetail.setInt(2, item.getStockId());
+                    if(item.getStockId() != null) psDetail.setInt(2, item.getStockId());  //handle nullable stockId
                     else psDetail.setNull(2, Types.INTEGER);
 
                     psDetail.setInt(3, item.getQuantity());
                     psDetail.setBigDecimal(4, item.getTotalAmount());
 
-                    psDetail.addBatch();
+                    psDetail.addBatch(); //Instead of executing immediately, this Stores the current insert in memory till all items are added
                 }
-                psDetail.executeBatch();
+                psDetail.executeBatch(); //send all inserts at once
             }
 
-            // ==================== UPDATE STOCK ====================
+            //  UPDATE STOCK
             String updateStockSql = "UPDATE ClothingStock SET Quantity = Quantity - ? WHERE StockId=?";
             try (PreparedStatement psUpdate = conn.prepareStatement(updateStockSql)) {
                 for(BillDetails bd : items){
@@ -123,7 +126,7 @@ public class BillingDAO {
                 psUpdate.executeBatch();
             }
 
-            conn.commit();
+            conn.commit();  //permanatly saves bill/billDetails/payment/stock
             return bill.getBillId();
 
         } catch(Exception e){
@@ -171,7 +174,7 @@ public class BillingDAO {
         }
         return false;
     }
-
+     //method for return specific bill details (use in billing panel in generating bill PDF)
     public Billing getById(int billId){
         String sql = "SELECT BillId, BillDate, Amount, BillDescription, BillStatus, PaymentId, CustomerId FROM Billing WHERE BillId=?";
         try(Connection conn = DBConnect.getDBConnection();
@@ -197,6 +200,8 @@ public class BillingDAO {
         return null;
     }
 
+
+    //methods to read all records from billing
     public List<Billing> getAll(){
         List<Billing> list = new ArrayList<>();
         String sql = "SELECT BillId, BillDate, Amount, BillDescription, BillStatus, PaymentId, CustomerId FROM Billing ORDER BY BillId DESC,BillDate";
@@ -221,7 +226,7 @@ public class BillingDAO {
         return list;
     }
 
-    // ===================== REFUND RELATED METHODS =====================
+    // REFUND RELATED METHODS
 
     // Update BillStatus (Paid, Partially Refunded, Refunded)
     public boolean updateBillStatus(int billId, String status){

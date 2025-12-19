@@ -23,12 +23,12 @@ public class ClothingStockDAO {
         }
     }
 
-    // ================== REFUND METHODS ==================
+    // METHODS FOR REFUND
     public boolean increaseStockQuantity(int stockId, int qty) {
         String sql = "UPDATE ClothingStock SET Quantity = Quantity + ? WHERE StockId=?";
         try (Connection conn = DBConnect.getDBConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, qty);
+            ps.setInt(1, qty); //new qty = old qty + refunded qty
             ps.setInt(2, stockId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -37,6 +37,7 @@ public class ClothingStockDAO {
         }
     }
 
+    /*
     public ClothingStock getStockById(int stockId){
         String sql = "SELECT StockId, ClothId, Color, Size, Quantity FROM ClothingStock WHERE StockId=?";
         try(Connection conn = DBConnect.getDBConnection();
@@ -59,7 +60,7 @@ public class ClothingStockDAO {
         return null;
     }
 
-    // ================== EXISTING METHODS (UNCHANGED) ==================
+
     public int getAvailableQuantity(int stockId) {
         String sql = "SELECT Quantity FROM ClothingStock WHERE StockId=?";
         try (Connection conn = DBConnect.getDBConnection();
@@ -86,6 +87,7 @@ public class ClothingStockDAO {
         }
     }
 
+     */
     public boolean restockItem(ClothingStock stock, User user) {
         if (!hasPermission(user, "restock") || stock == null || stock.getClothId() == null || stock.getClothId().isEmpty())
             return false;
